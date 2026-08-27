@@ -407,6 +407,7 @@ body {
     for (const c of sorted) {
       const p = positions.get(c.id);
       const el = document.createElement('div');
+      el.dataset.id = c.id;
       el.className = 'node level-' + c.level +
         (state.selectedId === c.id ? ' selected' : '') +
         (q && !highlight.has(c.id) ? ' dim' : '');
@@ -415,7 +416,10 @@ body {
       el.style.width  = c.width + 'px';
       el.style.height = c.height + 'px';
       el.style.background = 'linear-gradient(180deg, ' + hexA(c.color, 0.25) + ', ' + hexA(c.color, 0.55) + ')';
-      el.style.zIndex = (100 - c.level).toString();
+      // Deeper levels paint on top so smaller inner nodes are hit-testable and
+      // visually cover their parents. (In the live React Flow app, nodes are
+      // actually nested in the DOM so this comes for free.)
+      el.style.zIndex = String(c.level + 1);
 
       const hasChildren = childrenOf.has(c.id) && childrenOf.get(c.id).length > 0;
       const tags = (c.metadata && Array.isArray(c.metadata.tags)) ? c.metadata.tags.slice(0, 6) : [];
@@ -501,7 +505,7 @@ body {
   function updateCrumb() {
     if (!state.focusRootId) { crumb.style.display = 'none'; return; }
     const chain = ancestors(state.focusRootId);
-    crumb.style.display = '';
+    crumb.style.display = 'block';
     crumb.innerHTML = '<span class="up" data-parent="' + (chain[chain.length - 2]?.id ?? '') + '">↑ Up</span> Viewing: ' +
       chain.map(c => '<span>' + esc(c.name) + '</span>').join(' <span style="color:#475569">›</span> ');
     crumb.querySelector('.up').onclick = () => focusOn(chain[chain.length - 2]?.id ?? null);
@@ -538,7 +542,11 @@ body {
     html += '<div class="row"><div class="label">Metadata</div><pre>' + esc(JSON.stringify(c.metadata || {}, null, 2)) + '</pre></div>';
 
     panel.innerHTML = html;
-    render();
+    // Update the .selected class in place — do NOT re-render the whole DOM here,
+    // otherwise the click target vanishes and dblclick can never fire.
+    nodesEl.querySelectorAll('.node.selected').forEach((n) => n.classList.remove('selected'));
+    const sel = nodesEl.querySelector('.node[data-id="' + id + '"]');
+    if (sel) sel.classList.add('selected');
   }
 
   function focusOn(id) {
