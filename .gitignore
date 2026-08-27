@@ -1,0 +1,21 @@
+# Build outputs
+node_modules/
+dist/
+target/
+*.class
+*.jar
+
+# Databases + local state
+*.db
+*.db-journal
+
+# Logs
+*.log
+/tmp/*
+
+# OS/editors
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.tsbuildinfo

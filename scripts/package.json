@@ -1,0 +1,15 @@
+{
+  "name": "citymap-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Seed + e2e-test helpers for citymap",
+  "type": "module",
+  "scripts": {
+    "import": "node import-github.mjs geekychris",
+    "test": "node test-zoom-detail.mjs",
+    "test:verbose": "node test-zoom-detail.mjs --verbose"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.9.0"
+  }
+}

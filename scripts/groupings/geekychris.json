@@ -1,0 +1,401 @@
+{
+  "cityName": "geekychris Portfolio",
+  "cityDescription": "Products, platforms, and applications by geekychris — organized as a TOGAF-style city map.",
+  "products": [
+    {
+      "name": "Hitorro Framework",
+      "color": "#7c3aed",
+      "description": "A modular Java framework for type-aware JSON processing, NLP, full-text search, and distributed compute.",
+      "subsystems": [
+        {
+          "name": "Core & Base",
+          "color": "#a78bfa",
+          "repos": [
+            "hitorro-core", "hitorro-base", "hitorro-baseui", "hitorro-basefile",
+            "hitorro-basedms", "hitorro-util", "hitorro-spring-boot",
+            "hitorro-all", "hitorro-test", "hitorro-maven",
+            "hitorro-example-springboot", "hitorro-jvs-example-springboot",
+            "hitorro-unittime", "hitorro-gittools"
+          ]
+        },
+        {
+          "name": "JVS Type System",
+          "color": "#c4b5fd",
+          "repos": [
+            "hitorro-jsontypesystem", "hitorro-jsonts-mongo",
+            "hitorro-jvssql", "hitorro-jsonsql"
+          ]
+        },
+        {
+          "name": "Text & NLP",
+          "color": "#8b5cf6",
+          "repos": [
+            "hitorro-text-core", "hitorro-text-persistence",
+            "hitorro-analysis", "hitorro-features", "hitorro-dedupe",
+            "hitorro-conversation", "hitorro-dataaquisition"
+          ]
+        },
+        {
+          "name": "Storage & Streams",
+          "color": "#6d28d9",
+          "repos": [
+            "hitorro-kvstore", "hitorro-streams",
+            "hitorro-streams-nats", "hitorro-streams-kafka"
+          ]
+        },
+        {
+          "name": "Search & Retrieval",
+          "color": "#5b21b6",
+          "repos": [
+            "hitorro-index", "hitorro-search-ui", "hitorro-retrieval",
+            "hitorro-fleet-retrieval", "hitorro-objretrieval",
+            "hitorro-luceneviewer", "hitorro-logdigest", "hitorro-prbench"
+          ]
+        },
+        {
+          "name": "Mesh (distributed)",
+          "color": "#4c1d95",
+          "repos": [
+            "hitorro-mesh-core", "hitorro-mesh-driver", "hitorro-mesh-driver-app",
+            "hitorro-mesh-agent", "hitorro-mesh-agent-app", "hitorro-mesh-agent-pipelines",
+            "hitorro-mesh-nats", "hitorro-mesh-k8s", "hitorro-mesh-orion",
+            "hitorro-mesh-datasets", "hitorro-mesh-examples",
+            "hitorro-mesh-pipelines", "hitorro-mesh-pipelines-sqlite",
+            "hitorro-mesh-pipelines-lucene", "hitorro-mesh-pipelines-kvstore",
+            "hitorro-mesh-pipelines-jvstype",
+            "hitorro-mesh-streaming-kafka", "hitorro-mesh-streaming-nats"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AmigaOS 4 Platform",
+      "color": "#ea580c",
+      "description": "Modern platform work for AmigaOS 4.1 PPC — networking drivers, applications, dev tooling, and hardware.",
+      "subsystems": [
+        {
+          "name": "Network Drivers",
+          "color": "#fb923c",
+          "repos": [
+            "rtl8139-amigaos4-re", "virtnet-amigaos4", "amiga-e1000-driver",
+            "loopback-amigaos4", "netstack-amigaos4", "iperf-amigaos4"
+          ]
+        },
+        {
+          "name": "Applications",
+          "color": "#fdba74",
+          "repos": ["TrapezePDF", "python-amigaos4"]
+        },
+        {
+          "name": "Dev Tooling",
+          "color": "#f97316",
+          "repos": ["amiga_mcp", "amiga_games", "fsuae_remote_patch"]
+        },
+        {
+          "name": "Hardware / FPGA / Demos",
+          "color": "#c2410c",
+          "repos": [
+            "fast_68000", "amiga_flickerfixer_fpga",
+            "amiga-boing-html", "opengl_boingball"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Enterprise Social Platform",
+      "color": "#0891b2",
+      "description": "Social networking platform with graph cache, forum service, and monitoring.",
+      "subsystems": [
+        {
+          "name": "Platform",
+          "color": "#22d3ee",
+          "repos": [
+            "enterprise_social_platform",
+            "AOEE_Attribute_object_enterprise_edition",
+            "forums_service",
+            "social_media_monitoring"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Home Assistant Ecosystem",
+      "color": "#059669",
+      "description": "Home Assistant integrations, native clients, and automation tooling.",
+      "subsystems": [
+        {
+          "name": "Clients",
+          "color": "#10b981",
+          "repos": [
+            "habitat_swift_homeassistant",
+            "homeassistant_android_dash",
+            "homeassistant_java_client"
+          ]
+        },
+        {
+          "name": "Automation & MCP",
+          "color": "#34d399",
+          "repos": [
+            "homeassistant_assistant", "homeassistant_mcp",
+            "ha-house-tools", "solarsage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AI / LLM Tooling",
+      "color": "#db2777",
+      "description": "AI-powered code review, local LLM apps, chat, and NLP services.",
+      "subsystems": [
+        {
+          "name": "Code Review Bots",
+          "color": "#f472b6",
+          "repos": [
+            "agentic_pr_review",
+            "Claude-based-PR-AI-Review-tool-for-github",
+            "pr_benchy",
+            "claude-session-analyzer"
+          ]
+        },
+        {
+          "name": "Local LLM Apps",
+          "color": "#ec4899",
+          "repos": [
+            "brain", "mcp_streaming_with_chat_service",
+            "simple_langgraph_math_agent", "springai_math_test",
+            "spring_ai_experiments", "spring_ai_mcp_calculator",
+            "ollama_embedding", "java_rag", "rust_ai_cli", "simple_chat_ui"
+          ]
+        },
+        {
+          "name": "NLP Services",
+          "color": "#be185d",
+          "repos": [
+            "sentiment_service", "ELSA-entity-level-sentiment",
+            "numaflow_nlp_test", "text2speech", "localspeechtotext",
+            "wake_word", "telegram_runner",
+            "cpp_attention_transformer_demo"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data & Search Platforms",
+      "color": "#0284c7",
+      "description": "Lakehouse ingestion, search UIs, code graphs, and ML feature stores.",
+      "subsystems": [
+        {
+          "name": "Lakehouse & Ingest",
+          "color": "#38bdf8",
+          "repos": [
+            "structured-logger", "warehouse-sync",
+            "spark_minio_trino", "datahub_local", "local_log_search",
+            "distributed_web_crawler", "kafkadatagenerator", "apple_mail_dump",
+            "webpage_scraper"
+          ]
+        },
+        {
+          "name": "Search UIs & Tools",
+          "color": "#7dd3fc",
+          "repos": [
+            "opensearch_testui", "react_product_search",
+            "code_graph_search", "simple_opensearch", "k8_opensearch",
+            "lucene_viewer"
+          ]
+        },
+        {
+          "name": "Ranking & ML",
+          "color": "#0369a1",
+          "repos": [
+            "feature_store", "gbdt_accelerated_ranker_framework",
+            "music_transcription"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Infrastructure & DevOps",
+      "color": "#475569",
+      "description": "Orchestration, secrets, messaging, proxies, and CI/CD.",
+      "subsystems": [
+        {
+          "name": "Orchestration & Queues",
+          "color": "#64748b",
+          "repos": [
+            "orion_mesh", "generic_k8_work_queues",
+            "git_webhook_k8_jobs_example", "docker-tui", "docker_utils",
+            "jenkins_setup", "mediawiki"
+          ]
+        },
+        {
+          "name": "Messaging & Webhooks",
+          "color": "#94a3b8",
+          "repos": [
+            "webhook_infra", "webhook_site", "kafka_webhook_sender",
+            "kafka_broker_abstraction", "eventbus", "websocket_events"
+          ]
+        },
+        {
+          "name": "Networking & Proxies",
+          "color": "#334155",
+          "repos": [
+            "godns", "java_dns", "rest_router", "jdbc_proxy",
+            "skytunnel", "remote_hid"
+          ]
+        },
+        {
+          "name": "Secrets & Security",
+          "color": "#1e293b",
+          "repos": [
+            "secretvaultj", "securevault", "secure_paste", "cryptfs"
+          ]
+        },
+        {
+          "name": "Key-Value & Storage",
+          "color": "#0f172a",
+          "repos": [
+            "jrocksserver", "gorocks", "rust_rocks_2", "featureflags"
+          ]
+        },
+        {
+          "name": "Dev Tools & Editors",
+          "color": "#111827",
+          "repos": [
+            "redis_intellij_plugin", "java_visual_editor",
+            "homebrew-history-viewer", "history_viewer",
+            "client_sdk_generator", "bunnylol"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "IoT & Hardware",
+      "color": "#65a30d",
+      "description": "Cameras, sensors, MCU firmware, FPGA experiments.",
+      "subsystems": [
+        {
+          "name": "Cameras & Vision",
+          "color": "#84cc16",
+          "repos": [
+            "camera_dash_platform", "pi_usb_camera",
+            "pupil", "pupil.hardware", "leap_motion_harp"
+          ]
+        },
+        {
+          "name": "Sensors & Firmware",
+          "color": "#a3e635",
+          "repos": [
+            "bluetooth_spy", "esp-lightning-sensor",
+            "ws2812_fpga_play", "tuya-lib"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "iOS / macOS Apps",
+      "color": "#f59e0b",
+      "description": "Native Swift/SwiftUI apps for macOS and iOS.",
+      "subsystems": [
+        {
+          "name": "Apps",
+          "color": "#fbbf24",
+          "repos": [
+            "nutrition_app", "swift_weight_tracker",
+            "swift_photo_viewer", "swift_artifact_manager",
+            "Web-Watcher"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cross-platform Apps",
+      "color": "#0d9488",
+      "description": "Flutter/Dart apps that run across desktop and mobile.",
+      "subsystems": [
+        {
+          "name": "Apps",
+          "color": "#2dd4bf",
+          "repos": [
+            "dart_network_scanner", "kids_math_exerciser",
+            "flutter_map_ipad", "markdown_flutter", "flutter_mac_recorder"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Web Utilities & Toys",
+      "color": "#6b7280",
+      "description": "Focused single-purpose web apps, demos, and toys.",
+      "subsystems": [
+        {
+          "name": "Web Utilities",
+          "color": "#9ca3af",
+          "repos": [
+            "redis_monitoring", "websocket_task_board",
+            "mindmap_service", "questionare_server", "easy_finance",
+            "asset_manager", "docmgmt", "prometheus_test_services",
+            "google_chat_client", "photo_organizer", "photo_organizer_ui",
+            "image_slideshow", "vaadin_flow_emp_dept", "dumblinkspage",
+            "react_flow_demo", "countdown_clock", "dumb_boulderdash",
+            "springwarp", "pom_to_markdown"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Books & Meta",
+      "color": "#a16207",
+      "description": "Books, profile config, standalone tests.",
+      "subsystems": [
+        {
+          "name": "Books & Meta",
+          "color": "#ca8a04",
+          "repos": [
+            "-Engineering-Intelligence", "geekychris", "report",
+            "devhubpro", "labelhive", "python_package_test",
+            "test_repo", "test_family", "nemotron_autostart",
+            "kqueue-review-test", "cpp_rocks_boost_cpp_examples",
+            "verilator_mac", "rust_PCFG_parser", "photo_organizer",
+            "cloudws-e2e-rpn-java", "cloudws-e2e-rpn-python",
+            "cloudws-e2e-rpn-go", "cloudws-e2e-rpn-rust"
+          ]
+        }
+      ]
+    }
+  ],
+  "connections": [
+    { "from": "hitorro-search-ui",    "to": "hitorro-fleet-retrieval", "kind": "calls",       "label": "BFF" },
+    { "from": "hitorro-fleet-retrieval","to": "hitorro-retrieval",       "kind": "uses",        "label": "hosts" },
+    { "from": "hitorro-retrieval",    "to": "hitorro-index",          "kind": "uses" },
+    { "from": "hitorro-retrieval",    "to": "hitorro-kvstore",        "kind": "uses" },
+    { "from": "hitorro-index",        "to": "hitorro-jsontypesystem", "kind": "depends_on" },
+    { "from": "hitorro-jvssql",       "to": "hitorro-jsontypesystem", "kind": "depends_on" },
+    { "from": "hitorro-jvssql",       "to": "hitorro-streams",        "kind": "uses" },
+    { "from": "hitorro-streams-kafka","to": "hitorro-streams",        "kind": "extends" },
+    { "from": "hitorro-streams-nats", "to": "hitorro-streams",        "kind": "extends" },
+    { "from": "hitorro-jsonts-mongo", "to": "hitorro-jsontypesystem", "kind": "adapts" },
+    { "from": "hitorro-mesh-driver-app","to": "hitorro-mesh-driver",    "kind": "packages" },
+    { "from": "hitorro-mesh-agent-app","to": "hitorro-mesh-agent",      "kind": "packages" },
+    { "from": "hitorro-mesh-driver",  "to": "hitorro-mesh-core",      "kind": "depends_on" },
+    { "from": "hitorro-mesh-agent",   "to": "hitorro-mesh-core",      "kind": "depends_on" },
+    { "from": "hitorro-mesh-nats",    "to": "hitorro-mesh-core",      "kind": "implements" },
+    { "from": "hitorro-mesh-k8s",     "to": "hitorro-mesh-driver",    "kind": "deploys" },
+    { "from": "hitorro-mesh-orion",   "to": "hitorro-mesh-driver",    "kind": "deploys" },
+    { "from": "hitorro-mesh-agent-pipelines","to": "hitorro-mesh-pipelines","kind": "executes" },
+    { "from": "hitorro-mesh-pipelines-lucene","to": "hitorro-mesh-pipelines","kind": "extends" },
+    { "from": "hitorro-mesh-pipelines-sqlite","to": "hitorro-mesh-pipelines","kind": "extends" },
+    { "from": "hitorro-mesh-pipelines-kvstore","to": "hitorro-mesh-pipelines","kind": "extends" },
+    { "from": "hitorro-mesh-streaming-kafka","to": "hitorro-mesh-agent","kind": "extends" },
+    { "from": "hitorro-mesh-streaming-nats", "to": "hitorro-mesh-agent","kind": "extends" },
+    { "from": "warehouse-sync",       "to": "structured-logger",      "kind": "sibling_of",  "label": "same stack" },
+    { "from": "enterprise_social_platform","to": "AOEE_Attribute_object_enterprise_edition","kind": "uses","label": "graph cache" },
+    { "from": "enterprise_social_platform","to": "forums_service",    "kind": "uses" },
+    { "from": "solarsage",            "to": "ha-house-tools",         "kind": "used_by" },
+    { "from": "homeassistant_mcp",    "to": "homeassistant_java_client","kind": "uses" },
+    { "from": "amiga_mcp",            "to": "amiga_games",            "kind": "hosts_examples" },
+    { "from": "virtnet-amigaos4",     "to": "loopback-amigaos4",      "kind": "sibling_of" },
+    { "from": "amiga-e1000-driver",   "to": "loopback-amigaos4",      "kind": "sibling_of" },
+    { "from": "iperf-amigaos4",       "to": "virtnet-amigaos4",       "kind": "tests" },
+    { "from": "TrapezePDF",           "to": "amiga_mcp",              "kind": "developed_with" }
+  ]
+}
