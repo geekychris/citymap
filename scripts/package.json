@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "import": "node import-github.mjs geekychris",
+    "export:html": "node export-html.mjs --out=citymap.html",
+    "gen:backend-template": "node gen-backend-template.mjs",
     "test": "node test-zoom-detail.mjs",
     "test:verbose": "node test-zoom-detail.mjs --verbose"
   },

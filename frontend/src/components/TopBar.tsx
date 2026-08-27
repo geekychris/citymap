@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
-import { Building2, Download, Plus, RefreshCw } from 'lucide-react'
+import { Building2, Download, FileCode, Plus, RefreshCw } from 'lucide-react'
 import { useUI } from '../store'
 
 export function TopBar() {
@@ -35,6 +35,11 @@ export function TopBar() {
     URL.revokeObjectURL(url)
   }
 
+  const doExportHtml = () => {
+    // The backend renders a self-contained HTML file for the current DB state.
+    window.location.href = '/api/export/html?download=true'
+  }
+
   return (
     <header className="h-12 flex items-center gap-3 px-4 border-b border-line bg-panel/80 backdrop-blur">
       <div className="flex items-center gap-2 font-semibold">
@@ -46,8 +51,11 @@ export function TopBar() {
       <button className="btn" onClick={() => qc.invalidateQueries({ queryKey: ['components'] })}>
         <RefreshCw size={14} /> Refresh
       </button>
-      <button className="btn" onClick={doExport}>
+      <button className="btn" onClick={doExport} title="Portable JSON — importable back into any CityMap instance">
         <Download size={14} /> Export JSON
+      </button>
+      <button className="btn" onClick={doExportHtml} title="Self-contained HTML — open anywhere, no server needed">
+        <FileCode size={14} /> Export HTML
       </button>
       <button className="btn btn-primary" onClick={() => createCity.mutate()}>
         <Plus size={14} /> New City

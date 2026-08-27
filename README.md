@@ -24,6 +24,7 @@ components:
 - [Quick start](#quick-start)
 - [Interacting with the city](#interacting-with-the-city)
 - [Populating the map](#populating-the-map)
+- [Exporting](#exporting)
 - [REST API](#rest-api)
 - [MCP server](#mcp-server)
 - [Data model](#data-model-sqlite)
@@ -244,6 +245,40 @@ curl -X POST http://localhost:8088/api/import?replace=true \
 
 ---
 
+## Exporting
+
+Two export formats, both first-class:
+
+### 1. Portable JSON  →  `GET /api/export`
+
+`{version, components, connections}`. Re-importable with `POST /api/import`. Also the
+"Export JSON" button in the top bar.
+
+### 2. Self-contained HTML  →  `GET /api/export/html`
+
+One file, zero dependencies, includes all styling + a small JS runtime + the data
+inlined. Pan (drag), zoom (wheel / trackpad), keyword search, click a component for
+its detail panel, double-click to drill in, Esc to zoom out. Same colours, semantic
+zoom, and dependency edges as the live app. Email it, host it on S3, or open it
+straight off disk.
+
+**Live example in this repo:** [`examples/geekychris-citymap.html`](examples/geekychris-citymap.html)
+— clone the repo and open it, or download the raw file and open with `file://`.
+
+Trigger it three ways:
+
+| Where       | How                                                                 |
+| ----------- | ------------------------------------------------------------------- |
+| UI          | Top bar → **Export HTML** button                                    |
+| curl        | `curl -o city.html http://localhost:8088/api/export/html`           |
+| CLI (Node)  | `cd scripts && npm run export:html` → writes `citymap.html`         |
+
+If you edit the export renderer at `scripts/lib/render-html-export.mjs`, run
+`npm run gen:backend-template` to regenerate `backend/src/main/resources/export/city-template.html`
+so the backend serves the new version too.
+
+---
+
 ## REST API
 
 Base URL: `http://localhost:8088/api`. All bodies are JSON.
@@ -264,7 +299,8 @@ Base URL: `http://localhost:8088/api`. All bodies are JSON.
 | POST   | `/connections`                    | Create — `{sourceId, targetId, kind?, label?}` |
 | PUT    | `/connections/{id}`               | Update                                          |
 | DELETE | `/connections/{id}`               | Delete                                          |
-| GET    | `/export`                         | Full export: `{version, components, connections}` |
+| GET    | `/export`                         | Full JSON export: `{version, components, connections}` |
+| GET    | `/export/html?download=&title=`   | Self-contained interactive HTML export        |
 | POST   | `/import?replace=false`           | Bulk import (preserves parent relationships via id remapping) |
 
 Reparenting into your own subtree returns `400`. FK integrity is enforced by SQLite
