@@ -5,6 +5,13 @@ Cities → Districts → Neighborhoods → Buildings → Rooms (L0…Ln), with a
 drag & drop, inline editing, markdown notes, search, cross-cutting dependency edges,
 plus a REST API and an MCP server so an AI assistant can read and edit the map too.
 
+> **▶ Try the live interactive HTML export in your browser:**
+> **[geekychris.github.io/citymap/examples/geekychris-citymap.html](https://geekychris.github.io/citymap/examples/geekychris-citymap.html)**
+>
+> That's the whole `geekychris` portfolio (257 components, 33 dependency edges) baked
+> into one self-contained HTML file — drag to pan, wheel to zoom, click a component
+> for its details, double-click to drill in, Esc to zoom back out.
+
 ![Whole-city view — 12 product districts colored by capability](docs/screenshot-city.png)
 
 Focus into any district to reveal its subsystems, and into any subsystem to see its
@@ -262,8 +269,13 @@ its detail panel, double-click to drill in, Esc to zoom out. Same colours, seman
 zoom, and dependency edges as the live app. Email it, host it on S3, or open it
 straight off disk.
 
-**Live example in this repo:** [`examples/geekychris-citymap.html`](examples/geekychris-citymap.html)
-— clone the repo and open it, or download the raw file and open with `file://`.
+**Live example** — three ways to open it:
+
+- **▶ Rendered on GitHub Pages** (works in any browser, nothing to install):
+  [geekychris.github.io/citymap/examples/geekychris-citymap.html](https://geekychris.github.io/citymap/examples/geekychris-citymap.html)
+- **Source view** on GitHub (shows the file; won't execute — GitHub sandboxes HTML on `github.com`):
+  [`examples/geekychris-citymap.html`](examples/geekychris-citymap.html)
+- **Local**: `curl -O https://raw.githubusercontent.com/geekychris/citymap/main/examples/geekychris-citymap.html && open geekychris-citymap.html`
 
 Trigger it three ways:
 
