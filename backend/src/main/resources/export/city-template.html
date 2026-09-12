@@ -102,12 +102,28 @@ body {
   color: var(--subink);
   display: none;
 }
-#crumb .up {
+#crumb .up,
+#crumb .sib-prev,
+#crumb .sib-next {
   color: var(--accent);
   cursor: pointer;
   margin-right: 8px;
 }
-#crumb .up:hover { text-decoration: underline; }
+#crumb .up:hover,
+#crumb .sib-prev:hover,
+#crumb .sib-next:hover { text-decoration: underline; }
+#crumb .sib-prev[data-off], #crumb .sib-next[data-off] {
+  color: var(--subink);
+  cursor: default;
+  opacity: 0.5;
+  text-decoration: none !important;
+}
+#crumb .sib-idx {
+  color: var(--subink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  margin-right: 8px;
+}
 #hint {
   position: absolute; bottom: 12px; left: 12px;
   padding: 6px 10px;
@@ -425,9 +441,425 @@ body[data-mode="wireframe"] #hint {
   color: #111827;
 }
 
+/* ---------- Tile print (screen + print) ---------------------------------- */
+/* Hidden by default. Populated by buildTiles() when the user prints with
+   Pages ≥ 1, and torn down again after the browser fires afterprint. */
+#print-sheet { display: none; }
+.print-pages-label { display: inline-flex; align-items: center; }
+.print-pages-label select {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+}
+body[data-mode="wireframe"] .print-pages-label select {
+  background: #ffffff; color: #111827; border-color: #111827;
+}
+body[data-mode="blueprint"] .print-pages-label select {
+  background: rgba(255,255,255,.08); color: #eaf2ff; border-color: rgba(255,255,255,.4);
+}
+
+.print-tile {
+  width: 263mm;   /* letter landscape (279.4mm) minus 8mm margins each side */
+  height: 199mm;  /* letter landscape (215.9mm) minus 8mm margins each side */
+  overflow: hidden;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+  outline: 0.2mm dashed #9ca3af;
+  outline-offset: -0.2mm;
+  background: #ffffff;
+}
+.print-tile:last-child { page-break-after: auto; break-after: auto; }
+body[data-mode="blueprint"] .print-tile {
+  background:
+    linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 40px 40px,
+    #0d3b7a;
+  outline-color: rgba(255,255,255,.4);
+}
+body[data-mode="wireframe"] .print-tile { background: #ffffff; outline-color: #4b5563; }
+
+.tile-label {
+  position: absolute;
+  bottom: 3mm;
+  right: 5mm;
+  font-size: 3.5mm;
+  color: rgba(0,0,0,0.6);
+  background: rgba(255,255,255,0.92);
+  padding: 1mm 3mm;
+  border-radius: 1mm;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  z-index: 999;
+}
+body[data-mode="blueprint"] .tile-label {
+  color: #eaf2ff;
+  background: rgba(9,34,71,0.92);
+}
+
+/* Per-page (L1/L2) print — each subtree gets a header strip at the top of its
+   sheet plus its fit-to-page world clone below. */
+.per-page-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 12mm;
+  padding: 2.5mm 5mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8mm;
+  background: #ffffff;
+  border-bottom: 0.15mm solid #d1d5db;
+  z-index: 500;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.per-page-header .pp-title {
+  font-size: 12pt; font-weight: 700;
+  display: flex; align-items: baseline; gap: 2mm;
+}
+.per-page-header .pp-badge {
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.06em;
+  border: 0.15mm solid #9ca3af; color: #4b5563;
+  padding: 0.4mm 1.5mm; border-radius: 0.5mm;
+  font-weight: 500;
+}
+.per-page-header .pp-meta {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 8pt; color: #6b7280;
+}
+.per-page-header .pp-idx {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #4b5563;
+}
+body[data-mode="blueprint"] .per-page-header {
+  background: rgba(9,34,71,0.95);
+  border-bottom-color: rgba(255,255,255,0.4);
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] .per-page-header .pp-badge { color: #cffafe; border-color: rgba(255,255,255,0.4); }
+body[data-mode="blueprint"] .per-page-header .pp-meta,
+body[data-mode="blueprint"] .per-page-header .pp-idx { color: #cffafe; }
+
+/* ---------- Outline view + print ---------------------------------------- */
+/* A text-first, layout-independent rendering of the map. Shown on screen when
+   body.outlining is active AND during print — so you can preview it, adjust,
+   and re-print without leaving the page. */
+#print-outline { display: none; }
+body.outlining > *:not(#print-outline) { display: none !important; }
+body.outlining {
+  background: #ffffff !important;
+  color: #111827 !important;
+  overflow: auto !important;
+}
+body.outlining #print-outline {
+  display: block !important;
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 18mm 15mm;
+  max-width: 220mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+@media print {
+  body.outlining #print-outline {
+    padding: 0;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+  }
+  body.outlining { overflow: visible !important; }
+}
+
+/* Floating toolbar attached to the outline view — only visible on screen. */
+.outline-toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #ffffff;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+}
+.outline-toolbar button, .outline-toolbar select {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+}
+.outline-toolbar button:hover { background: #f3f4f6; }
+.outline-toolbar .primary {
+  background: #0284c7;
+  border-color: #0369a1;
+  color: #ffffff;
+}
+.outline-toolbar .primary:hover { background: #0369a1; }
+.outline-toolbar label { color: #4b5563; font-size: 12px; }
+@media print { .outline-toolbar { display: none !important; } }
+.outline-cover {
+  text-align: center;
+  padding: 55mm 10mm 15mm;
+  border-bottom: 0.4mm solid #111827;
+  margin-bottom: 12mm;
+  break-after: page;
+}
+.outline-cover h1 {
+  font-size: 26pt; margin: 0 0 4mm; letter-spacing: -0.01em;
+  color: #111827;
+}
+.outline-cover .cover-sub {
+  font-size: 11pt; color: #4b5563; font-weight: 500;
+}
+.outline-cover .cover-gen {
+  font-size: 9pt; color: #6b7280; margin-top: 2mm; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.outline-body {
+  column-count: 2;
+  column-gap: 8mm;
+  column-fill: auto;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.4;
+}
+.outline-entry {
+  break-inside: avoid-column;
+  page-break-inside: avoid;
+  margin: 0 0 3mm;
+  padding: 1.5mm 2mm 1.5mm 3mm;
+  border-left: 0.3mm solid #d1d5db;
+}
+.city-block { break-inside: auto; }
+.city-block + .city-block { break-before: page; }
+.outline-entry.level-0 {
+  border-left: 0;
+  border-top: 0.5mm solid #111827;
+  padding: 4mm 0 3mm;
+  margin: 0 0 4mm;
+}
+.outline-entry.level-1 {
+  border-left-width: 0.5mm;
+  border-left-color: #374151;
+  padding-left: 3mm;
+  margin-top: 3mm;
+}
+.outline-entry.level-2 { border-left-color: #6b7280; }
+.outline-entry.level-3 { border-left-color: #9ca3af; }
+.outline-entry.level-4 { border-left-color: #d1d5db; }
+
+.outline-entry > header {
+  display: flex; align-items: baseline; gap: 2.5mm;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+.outline-entry .dot {
+  flex-shrink: 0;
+  width: 2.5mm; height: 2.5mm;
+  border-radius: 0.4mm;
+  align-self: center;
+  border: 0.15mm solid rgba(0,0,0,0.3);
+}
+.outline-entry .entry-title {
+  flex: 1 1 auto;
+  font-weight: 700;
+  color: #111827;
+}
+.outline-entry.level-0 .entry-title { font-size: 18pt; }
+.outline-entry.level-1 .entry-title { font-size: 13pt; }
+.outline-entry.level-2 .entry-title { font-size: 11pt; }
+.outline-entry.level-3 .entry-title { font-size: 10pt; }
+.outline-entry.level-4 .entry-title { font-size: 9.5pt; font-weight: 600; }
+.outline-entry .entry-type {
+  font-size: 7.5pt;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 0.15mm solid #9ca3af;
+  padding: 0.4mm 1.6mm;
+  border-radius: 0.5mm;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.outline-entry .entry-path {
+  font-size: 7.5pt;
+  color: #6b7280;
+  margin: 0.6mm 0 1.2mm;
+}
+.outline-entry .entry-desc {
+  color: #1f2937;
+  margin: 1mm 0;
+}
+.outline-entry.level-0 .entry-desc { font-size: 10.5pt; }
+.outline-entry .entry-notes {
+  font-size: 8.5pt;
+  color: #374151;
+  white-space: pre-wrap;
+  background: #f3f4f6;
+  border: 0.1mm solid #e5e7eb;
+  padding: 1.4mm 2mm;
+  border-radius: 0.5mm;
+  margin: 1mm 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.outline-entry .entry-facts {
+  font-size: 8pt;
+  color: #4b5563;
+  margin: 0.8mm 0;
+}
+.outline-entry .entry-facts strong { color: #111827; font-weight: 600; }
+.outline-entry .entry-conns {
+  font-size: 8pt;
+  color: #374151;
+  margin: 0.6mm 0;
+}
+.outline-entry .entry-conns strong {
+  color: #111827; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  font-size: 7pt;
+  margin-right: 1mm;
+}
+.outline-entry .entry-conns em { font-style: italic; color: #6b7280; }
+.outline-entry a { color: #1d4ed8; text-decoration: none; }
+.outline-entry a:hover { text-decoration: underline; }
+
+/* ---- Density variants ---- */
+/* Tree = single-column, sidebar-like hierarchy annotated with descriptions.
+   Indented per depth with a left border, no type badges — reads like a
+   commented outline. */
+#print-outline.density-tree .outline-body {
+  column-count: 1;
+  font-size: 10pt;
+  line-height: 1.25;
+  max-width: 190mm;
+  margin: 0 auto;
+}
+#print-outline.density-tree .outline-entry {
+  padding: 0 1mm 0 3mm;
+  margin: 0 0 0.5mm 0;
+  border: 0;
+  border-left: 0.3mm solid #d1d5db;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+#print-outline.density-tree .outline-entry.level-0 {
+  border-top: 0;
+  padding: 0.8mm 0 0.5mm;
+  margin-top: 2.5mm;
+  border-left: 0;
+}
+#print-outline.density-tree .outline-entry.level-0:first-child { margin-top: 0; }
+#print-outline.density-tree .outline-entry.level-1 { border-left-color: #374151; }
+#print-outline.density-tree .outline-entry.level-2 { border-left-color: #6b7280; }
+#print-outline.density-tree .outline-entry.level-3 { border-left-color: #9ca3af; }
+#print-outline.density-tree .outline-entry.level-4 { border-left-color: #d1d5db; }
+#print-outline.density-tree .outline-entry > header {
+  display: flex; align-items: baseline; gap: 1.4mm;
+  padding: 0;
+  margin: 0;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+#print-outline.density-tree .outline-entry .dot {
+  width: 1.5mm; height: 1.5mm; border-radius: 0.3mm; flex-shrink: 0;
+  border: 0.1mm solid rgba(0,0,0,.3);
+}
+#print-outline.density-tree .outline-entry .entry-title {
+  flex: 1 1 auto;
+  color: #111827;
+  line-height: 1.15;
+}
+#print-outline.density-tree .outline-entry.level-0 .entry-title { font-size: 12pt; font-weight: 700; }
+#print-outline.density-tree .outline-entry.level-1 .entry-title { font-size: 11pt; font-weight: 700; }
+#print-outline.density-tree .outline-entry.level-2 .entry-title { font-size: 10.5pt; font-weight: 600; }
+#print-outline.density-tree .outline-entry.level-3 .entry-title { font-size: 10pt; font-weight: 600; }
+#print-outline.density-tree .outline-entry.level-4 .entry-title { font-size: 10pt; font-weight: 500; }
+/* Drop the type badge in tree mode — user asked to lose "BUILDING" / "NEIGHBORHOOD" chips. */
+#print-outline.density-tree .outline-entry .entry-type { display: none; }
+#print-outline.density-tree .outline-entry .entry-desc {
+  font-size: 10pt;
+  color: #374151;
+  margin: 0.2mm 0 0 0;
+  line-height: 1.25;
+  /* Cap runaway descriptions so no single entry monopolises a page. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#print-outline.density-tree .outline-entry.level-0 .entry-desc {
+  font-size: 10pt;
+  color: #1f2937;
+  -webkit-line-clamp: 3;
+}
+
+/* Compact = pure index. 3 cols, small type, names + type badge only. */
+#print-outline.density-compact .outline-body {
+  column-count: 3;
+  column-gap: 5mm;
+  font-size: 8pt;
+  line-height: 1.25;
+}
+#print-outline.density-compact .outline-entry {
+  padding: 0.6mm 1.5mm;
+  margin-bottom: 1mm;
+}
+#print-outline.density-compact .outline-entry.level-0 {
+  padding: 2mm 0 1.5mm;
+  margin: 3mm 0 2mm;
+}
+#print-outline.density-compact .outline-entry.level-0 .entry-title { font-size: 14pt; }
+#print-outline.density-compact .outline-entry.level-1 .entry-title { font-size: 10.5pt; }
+#print-outline.density-compact .outline-entry.level-2 .entry-title { font-size: 9pt; }
+#print-outline.density-compact .outline-entry.level-3 .entry-title { font-size: 8pt; }
+#print-outline.density-compact .outline-entry.level-4 .entry-title { font-size: 7.5pt; font-weight: 600; }
+#print-outline.density-compact .outline-entry .entry-type { font-size: 6pt; padding: 0.2mm 1.2mm; }
+#print-outline.density-compact .outline-entry .dot { width: 2mm; height: 2mm; }
+
+/* Spacious = book-like. 1 col centered, roomy leading, larger type. */
+#print-outline.density-spacious .outline-body {
+  column-count: 1;
+  max-width: 155mm;
+  margin: 0 auto;
+  font-size: 11pt;
+  line-height: 1.55;
+}
+#print-outline.density-spacious .outline-entry {
+  padding: 3mm 3mm 3mm 4mm;
+  margin-bottom: 5mm;
+}
+#print-outline.density-spacious .outline-entry.level-0 {
+  padding: 6mm 0 4mm;
+  margin: 8mm 0 5mm;
+}
+#print-outline.density-spacious .outline-entry.level-0 .entry-title { font-size: 24pt; }
+#print-outline.density-spacious .outline-entry.level-1 .entry-title { font-size: 16pt; }
+#print-outline.density-spacious .outline-entry.level-2 .entry-title { font-size: 13pt; }
+#print-outline.density-spacious .outline-entry.level-3 .entry-title { font-size: 11.5pt; }
+#print-outline.density-spacious .outline-entry.level-4 .entry-title { font-size: 11pt; }
+#print-outline.density-spacious .outline-entry.level-0 .entry-desc { font-size: 12.5pt; }
+#print-outline.density-spacious .outline-entry .entry-desc { font-size: 11pt; }
+#print-outline.density-spacious .outline-entry .entry-notes { font-size: 10pt; padding: 2.5mm 3mm; }
+#print-outline.density-spacious .outline-entry .entry-facts,
+#print-outline.density-spacious .outline-entry .entry-conns { font-size: 9.5pt; margin: 1.5mm 0; }
+
 /* ---------- Print --------------------------------------------------------- */
 @media print {
-  @page { size: landscape; margin: 12mm; }
   html, body { height: auto !important; overflow: visible !important; }
   #topbar, #panel, #hint { display: none !important; }
   #stage, #viewport { overflow: visible !important; height: auto !important; }
@@ -451,6 +883,38 @@ body[data-mode="wireframe"] #hint {
     color: #111827 !important;
     border-bottom-color: #111827 !important;
   }
+
+  /* Tile-print branch — body.tiling is added by buildTiles() before print. */
+  body.tiling > *:not(#print-sheet) { display: none !important; }
+  body.tiling > #print-sheet { display: block !important; }
+  body.tiling { background: #ffffff !important; }
+  body.tiling.tiling-blueprint { background: #0d3b7a !important; }
+  #print-sheet, #print-sheet * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* When tiling, no default @page margin — tiles are already sized for a
+     letter landscape page with 8mm safety margins baked in. */
+  @page { size: letter landscape; margin: 8mm; }
+
+  /* Outline-print branch — body.outlining is added by buildOutline(). */
+  body.outlining > *:not(#print-outline) { display: none !important; }
+  body.outlining > #print-outline { display: block !important; }
+  body.outlining {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  body.outlining, body.outlining * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+/* Outline print prefers portrait letter — the two-column layout there gives
+   about 90mm per column, comfortable for body-copy typography. Named @page
+   so it only applies when #print-outline is actually rendered. */
+@page outline-page { size: letter portrait; margin: 15mm 12mm 18mm; }
+@media print {
+  body.outlining #print-outline { page: outline-page; }
 }
 </style>
 </head>
@@ -469,7 +933,24 @@ body[data-mode="wireframe"] #hint {
       </div>
       <input id="search" type="search" placeholder="Search components…" autocomplete="off" />
       <button id="toggle-edges" class="btn" title="Toggle connectors between components" aria-pressed="true">Edges: on</button>
-      <button id="print" class="btn" title="Print — hides chrome and prints in the current mode">Print</button>
+      <label class="print-pages-label" title="How many letter-sized pages wide to split the map across. Rows are auto-computed.">
+        <select id="print-pages">
+          <option value="fit">Fit to 1 sheet</option>
+          <option value="outline-tree">Outline — tree (like the sidebar)</option>
+          <option value="outline-compact">Outline — compact (index)</option>
+          <option value="outline">Outline — regular</option>
+          <option value="outline-spacious">Outline — spacious</option>
+          <option value="l1-per-page">One L1 per page (map)</option>
+          <option value="l2-per-page">One L2 per page (map)</option>
+          <option value="1">1 wide (tile down)</option>
+          <option value="2">2 wide</option>
+          <option value="3">3 wide</option>
+          <option value="4">4 wide</option>
+          <option value="6">6 wide</option>
+          <option value="8">8 wide</option>
+        </select>
+      </label>
+      <button id="print" class="btn" title="Print — hides chrome and prints in the current mode. Use the Pages selector to split large maps across sheets.">Print</button>
       <button id="reset" class="btn" title="Fit to whole city">Fit</button>
       <button id="up" class="btn" title="Zoom out one level (Esc)">↑ Up</button>
     </div>
@@ -505,6 +986,7 @@ body[data-mode="wireframe"] #hint {
   const btnUp = $('up');
   const btnPrint = $('print');
   const btnEdges = $('toggle-edges');
+  const printPagesEl = $('print-pages');
   const modesEl = $('modes');
   const bodyEl = document.body;
 
@@ -730,6 +1212,9 @@ body[data-mode="wireframe"] #hint {
       const dx = Math.abs(x2 - x1);
       const midx1 = x1 + dx * 0.4;
       const midx2 = x2 - dx * 0.4;
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('data-source', conn.sourceId);
+      g.setAttribute('data-target', conn.targetId);
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + midx1 + ' ' + y1 + ', ' + midx2 + ' ' + y2 + ', ' + x2 + ' ' + y2);
       const edgeColor =
@@ -741,7 +1226,7 @@ body[data-mode="wireframe"] #hint {
       path.setAttribute('stroke-width', state.mode === 'wireframe' ? '1.25' : '1.5');
       if (conn.kind === 'depends_on') path.setAttribute('stroke-dasharray', '4 4');
       path.setAttribute('opacity', state.mode === 'city' ? '0.65' : '0.9');
-      edgesEl.appendChild(path);
+      g.appendChild(path);
 
       if (conn.label) {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -753,21 +1238,65 @@ body[data-mode="wireframe"] #hint {
           state.mode === 'wireframe' ? '#111827' : '#94a3b8');
         text.setAttribute('text-anchor', 'middle');
         text.textContent = conn.label;
-        edgesEl.appendChild(text);
+        g.appendChild(text);
       }
+      edgesEl.appendChild(g);
     }
 
     updateCrumb();
   }
 
+  function siblingsOf(id) {
+    const c = byId.get(id);
+    if (!c) return [];
+    const parentId = c.parentId || null;
+    const sibs = (childrenOf.get(parentId) || []).slice().sort((a, b) => {
+      const dy = (a.y || 0) - (b.y || 0);
+      if (Math.abs(dy) > 20) return dy;
+      return (a.x || 0) - (b.x || 0);
+    });
+    return sibs;
+  }
+
   function updateCrumb() {
     if (!state.focusRootId) { crumb.style.display = 'none'; return; }
     const chain = ancestors(state.focusRootId);
+    const sibs = siblingsOf(state.focusRootId);
+    const idx = sibs.findIndex(s => s.id === state.focusRootId);
+    const prev = idx > 0 ? sibs[idx - 1] : null;
+    const next = idx >= 0 && idx < sibs.length - 1 ? sibs[idx + 1] : null;
     crumb.style.display = 'block';
-    crumb.innerHTML = '<span class="up" data-parent="' + (chain[chain.length - 2]?.id ?? '') + '">↑ Up</span> Viewing: ' +
+    crumb.innerHTML =
+      '<span class="up">↑ Up</span>' +
+      (sibs.length > 1
+        ? '<span class="sib-prev" title="Previous sibling (← arrow)"' + (prev ? '' : ' data-off="1"') + '>← Prev</span>' +
+          '<span class="sib-idx">' + (idx + 1) + ' / ' + sibs.length + '</span>' +
+          '<span class="sib-next" title="Next sibling (→ arrow)"' + (next ? '' : ' data-off="1"') + '>Next →</span>'
+        : '') +
+      ' Viewing: ' +
       chain.map(c => '<span>' + esc(c.name) + '</span>').join(' <span style="color:#475569">›</span> ');
     crumb.querySelector('.up').onclick = () => focusOn(chain[chain.length - 2]?.id ?? null);
+    const p = crumb.querySelector('.sib-prev');
+    const n = crumb.querySelector('.sib-next');
+    if (p && prev) p.onclick = () => focusOn(prev.id);
+    if (n && next) n.onclick = () => focusOn(next.id);
   }
+
+  // Arrow keys page through siblings when focused. Ignore when typing.
+  window.addEventListener('keydown', (e) => {
+    if (!state.focusRootId) return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    const sibs = siblingsOf(state.focusRootId);
+    const idx = sibs.findIndex(s => s.id === state.focusRootId);
+    if (e.key === 'ArrowLeft' && idx > 0) {
+      e.preventDefault();
+      focusOn(sibs[idx - 1].id);
+    } else if (e.key === 'ArrowRight' && idx >= 0 && idx < sibs.length - 1) {
+      e.preventDefault();
+      focusOn(sibs[idx + 1].id);
+    }
+  });
 
   function selectNode(id) {
     state.selectedId = id;
@@ -886,7 +1415,9 @@ body[data-mode="wireframe"] #hint {
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (state.focusRootId) {
+      if (bodyEl.classList.contains('outlining')) {
+        teardownOutline();
+      } else if (state.focusRootId) {
         const parent = byId.get(state.focusRootId).parentId;
         focusOn(parent || null);
       } else if (state.selectedId) {
@@ -905,7 +1436,440 @@ body[data-mode="wireframe"] #hint {
     const parent = byId.get(state.focusRootId).parentId;
     focusOn(parent || null);
   };
-  btnPrint.onclick = () => window.print();
+  function computeVisibleBounds() {
+    const visible = visibleIds();
+    const focusOffset = state.focusRootId ? abs.get(state.focusRootId) : { x: 0, y: 0 };
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const id of visible) {
+      const c = byId.get(id);
+      const a = abs.get(id);
+      const x = a.x - focusOffset.x, y = a.y - focusOffset.y;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + c.width > maxX) maxX = x + c.width;
+      if (y + c.height > maxY) maxY = y + c.height;
+    }
+    if (!isFinite(minX)) { minX = 0; minY = 0; maxX = 1; maxY = 1; }
+    return { minX, minY, maxX, maxY, worldW: maxX - minX, worldH: maxY - minY };
+  }
+
+  // Tile print — split the currently-visible world across an N-wide grid of
+  // letter-landscape sheets, each sized to the printable region (263 x 199 mm
+  // after 8 mm safety margins). Rows are auto-computed to preserve aspect.
+  function buildTiles(pagesWide) {
+    const { minX, minY, worldW, worldH } = computeVisibleBounds();
+    if (worldW <= 0 || worldH <= 0) return false;
+    const tileMmW = 263, tileMmH = 199;
+    const mmPerPx = (tileMmW * pagesWide) / worldW;
+    const pagesTall = Math.max(1, Math.ceil((worldH * mmPerPx) / tileMmH));
+    // Browsers assume 96 CSS px per inch; use that to convert our mm-per-px
+    // ratio into a unitless CSS scale factor for the transform.
+    const CSS_PX_PER_MM = 96 / 25.4;
+    const scale = mmPerPx * CSS_PX_PER_MM;
+
+    let sheet = document.getElementById('print-sheet');
+    if (sheet) sheet.remove();
+    sheet = document.createElement('div');
+    sheet.id = 'print-sheet';
+    bodyEl.appendChild(sheet);
+
+    const totalTiles = pagesWide * pagesTall;
+    let idx = 0;
+    for (let row = 0; row < pagesTall; row++) {
+      for (let col = 0; col < pagesWide; col++) {
+        idx++;
+        const tile = document.createElement('div');
+        tile.className = 'print-tile';
+
+        const originXpx = minX + col * (tileMmW / mmPerPx);
+        const originYpx = minY + row * (tileMmH / mmPerPx);
+
+        const worldClone = world.cloneNode(true);
+        worldClone.style.transformOrigin = '0 0';
+        worldClone.style.transform =
+          'translate(' + (-originXpx * scale) + 'px, ' + (-originYpx * scale) + 'px) scale(' + scale + ')';
+        // Duplicated IDs inside clones would collide with the interactive DOM
+        // (e.g. document.getElementById('edges') would find the wrong one).
+        worldClone.removeAttribute('id');
+        worldClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+        tile.appendChild(worldClone);
+
+        const label = document.createElement('div');
+        label.className = 'tile-label';
+        label.textContent = idx + '/' + totalTiles + '  ·  R' + (row + 1) + 'C' + (col + 1);
+        tile.appendChild(label);
+
+        sheet.appendChild(tile);
+      }
+    }
+    return true;
+  }
+
+  // One tile per subtree — used by both "N wide" tile print (whole visible
+  // world as one bounds) and "L1/L2 per page" print (one subtree per tile).
+  // Non-subtree nodes and edges in the world clone are hidden so each tile
+  // shows only the component and its descendants.
+  function buildPerLevel(level) {
+    const visible = visibleIds();
+    // Preserve reading order: top→bottom, then left→right (matches sibling nav).
+    const targets = DATA.components
+      .filter(c => visible.has(c.id) && c.level === level)
+      .slice()
+      .sort((a, b) => {
+        const dy = (a.y || 0) - (b.y || 0);
+        if (Math.abs(dy) > 20) return dy;
+        return (a.x || 0) - (b.x || 0);
+      });
+    if (!targets.length) return false;
+
+    const tileMmW = 263, tileMmH = 199;
+    const headerMmH = 12;   // reserved for per-page header at top
+    const contentMmH = tileMmH - headerMmH;
+    const CSS_PX_PER_MM = 96 / 25.4;
+
+    let sheet = document.getElementById('print-sheet');
+    if (sheet) sheet.remove();
+    sheet = document.createElement('div');
+    sheet.id = 'print-sheet';
+    bodyEl.appendChild(sheet);
+
+    targets.forEach((target, idx) => {
+      // Collect the subtree ids for this target.
+      const subtree = new Set();
+      const q = [target.id];
+      while (q.length) {
+        const id = q.shift();
+        subtree.add(id);
+        for (const child of (childrenOf.get(id) || [])) q.push(child.id);
+      }
+
+      // Bounds from DESCENDANTS only. The L1/L2 world box tends to be much
+      // wider than its actual content, so using the container's bounds wastes
+      // half the sheet. Falling back to the container's own bounds only when
+      // there are no descendants.
+      const focusOffset = state.focusRootId ? abs.get(state.focusRootId) : { x: 0, y: 0 };
+      const boundsIds = subtree.size > 1
+        ? [...subtree].filter(id => id !== target.id)
+        : [target.id];
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const id of boundsIds) {
+        const c = byId.get(id);
+        const a = abs.get(id);
+        const x = a.x - focusOffset.x, y = a.y - focusOffset.y;
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x + c.width > maxX) maxX = x + c.width;
+        if (y + c.height > maxY) maxY = y + c.height;
+      }
+      const w = maxX - minX, h = maxY - minY;
+      if (w <= 0 || h <= 0) return;
+
+      // Fit-to-page: pick the smaller scale so the subtree fits both dims.
+      const mmPerPx = Math.min(tileMmW / w, contentMmH / h);
+      const scale = mmPerPx * CSS_PX_PER_MM;
+      const scaledWmm = w * mmPerPx;
+      const scaledHmm = h * mmPerPx;
+      const marginXmm = (tileMmW - scaledWmm) / 2;
+      const marginYmm = headerMmH + (contentMmH - scaledHmm) / 2;
+
+      const tile = document.createElement('div');
+      tile.className = 'print-tile per-page';
+
+      const header = document.createElement('div');
+      header.className = 'per-page-header';
+      header.innerHTML =
+        '<div class="pp-title">' +
+          '<span class="pp-badge">' + esc(target.type || 'L' + target.level) + '</span> ' +
+          esc(target.name) +
+        '</div>' +
+        '<div class="pp-meta">' +
+          '<span class="pp-path">' + esc(pathOf(target.id)) + '</span>' +
+          '<span class="pp-idx">' + (idx + 1) + ' / ' + targets.length + '</span>' +
+        '</div>';
+      tile.appendChild(header);
+
+      const worldClone = world.cloneNode(true);
+      // Hide non-subtree nodes and edges. Also hide the target's own frame when
+      // it has descendants — the header at the top of the sheet already shows
+      // its name/type, and its world box is usually much larger than the
+      // descendants' actual footprint, wasting page area.
+      const hideTarget = subtree.size > 1;
+      worldClone.querySelectorAll('.node').forEach((n) => {
+        const id = n.dataset.id;
+        if (!subtree.has(id) || (hideTarget && id === target.id)) n.style.display = 'none';
+      });
+      worldClone.querySelectorAll('svg g[data-source]').forEach((g) => {
+        const s = g.getAttribute('data-source'), t = g.getAttribute('data-target');
+        if (!subtree.has(s) || !subtree.has(t)) g.remove();
+      });
+
+      worldClone.style.transformOrigin = '0 0';
+      worldClone.style.transform =
+        'translate(' + (marginXmm * CSS_PX_PER_MM - minX * scale) + 'px, ' +
+        (marginYmm * CSS_PX_PER_MM - minY * scale) + 'px) scale(' + scale + ')';
+      worldClone.removeAttribute('id');
+      worldClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+      tile.appendChild(worldClone);
+
+      sheet.appendChild(tile);
+    });
+
+    return true;
+  }
+
+  function teardownTiles() {
+    const sheet = document.getElementById('print-sheet');
+    if (sheet) sheet.remove();
+    bodyEl.classList.remove('tiling', 'tiling-blueprint');
+  }
+  function teardownOutline() {
+    const doc = document.getElementById('print-outline');
+    if (doc) doc.remove();
+    bodyEl.classList.remove('outlining');
+  }
+  // Do NOT tear down on afterprint — Chrome fires afterprint whenever the
+  // dialog closes (including cancel), which used to strip the tile sheet
+  // between the auto-print and the user hitting Cmd+P to re-print. Now we
+  // clear stale state at the START of each Print click instead. On screen,
+  // #print-sheet / #print-outline are hidden by their own display rules.
+
+  function pathOf(id) {
+    const chain = [];
+    let cur = byId.get(id);
+    while (cur) { chain.unshift(cur.name); cur = cur.parentId ? byId.get(cur.parentId) : null; }
+    return chain.join(' › ');
+  }
+
+  // Outline print — depth-first list of every component in (or below) the
+  // current focus, each one rendered as an information block. No layout — the
+  // point is to fit the *content* on paper, not the map's geometry.
+  function buildOutline(density = 'regular') {
+    // Index connections by endpoint once so each entry can lookup Uses/Used-by
+    // in constant time.
+    const outEdges = new Map(), inEdges = new Map();
+    for (const e of DATA.connections) {
+      if (!outEdges.has(e.sourceId)) outEdges.set(e.sourceId, []);
+      outEdges.get(e.sourceId).push(e);
+      if (!inEdges.has(e.targetId)) inEdges.set(e.targetId, []);
+      inEdges.get(e.targetId).push(e);
+    }
+
+    const visible = visibleIds();
+    const sections = [];
+    const walk = (id, depth) => {
+      if (!visible.has(id)) return;
+      const c = byId.get(id);
+      sections.push({ c, depth });
+      const kids = (childrenOf.get(id) || []).slice().sort((a, b) => {
+        // Reading order: top-to-bottom, then left-to-right.
+        const dy = (a.y || 0) - (b.y || 0);
+        if (Math.abs(dy) > 20) return dy;
+        return (a.x || 0) - (b.x || 0);
+      });
+      for (const child of kids) walk(child.id, depth + 1);
+    };
+    const startIds = state.focusRootId
+      ? [state.focusRootId]
+      : (childrenOf.get(null) || []).map(c => c.id);
+    for (const id of startIds) walk(id, 0);
+
+    if (!sections.length) return false;
+
+    let root = document.getElementById('print-outline');
+    if (root) root.remove();
+    root = document.createElement('div');
+    root.id = 'print-outline';
+    root.classList.add('density-' + density);
+
+    // Floating toolbar so the user can Print / change density / return to map
+    // without having to re-navigate. Screen-only — hidden by @media print.
+    const toolbar = document.createElement('div');
+    toolbar.className = 'outline-toolbar';
+    toolbar.innerHTML =
+      '<button data-outline-close title="Return to the map (Esc)">← Back to map</button>' +
+      '<label>Density</label>' +
+      '<select data-outline-density>' +
+        '<option value="tree"' + (density === 'tree' ? ' selected' : '') + '>Tree</option>' +
+        '<option value="compact"' + (density === 'compact' ? ' selected' : '') + '>Compact</option>' +
+        '<option value="regular"' + (density === 'regular' ? ' selected' : '') + '>Regular</option>' +
+        '<option value="spacious"' + (density === 'spacious' ? ' selected' : '') + '>Spacious</option>' +
+      '</select>' +
+      '<button class="primary" data-outline-print title="Open the browser print dialog (Cmd/Ctrl+P)">Print</button>';
+    root.appendChild(toolbar);
+    toolbar.querySelector('[data-outline-close]').onclick = () => teardownOutline();
+    toolbar.querySelector('[data-outline-print]').onclick = () => window.print();
+    toolbar.querySelector('[data-outline-density]').onchange = (e) => {
+      // Re-render at the newly-selected density and stay in outline view.
+      const d = e.target.value;
+      teardownOutline();
+      if (buildOutline(d)) bodyEl.classList.add('outlining');
+    };
+
+    // Field visibility by density. Tree is a single-column indented hierarchy
+    // with descriptions but no type badge / path / facts / connections — reads
+    // like an annotated outline. Compact is an index — name + type only.
+    // Regular keeps everything at 2 columns. Spacious uses one column with
+    // larger type.
+    const isTree     = density === 'tree';
+    const showPath   = !isTree && density !== 'compact';
+    const showDesc   = isTree || (density !== 'compact');
+    const showNotes  = !isTree && density !== 'compact';
+    const showFacts  = !isTree && density !== 'compact';
+    const showRepo   = !isTree && density !== 'compact';
+    const showConns  = !isTree && density !== 'compact';
+
+    const rootName = state.focusRootId
+      ? byId.get(state.focusRootId).name
+      : (sections.find(s => s.c.level === 0)?.c.name || 'CityMap');
+
+    const cover = document.createElement('section');
+    cover.className = 'outline-cover';
+    const genAt = document.querySelector('.brand-sub')?.textContent?.split(' · ').pop() || '';
+    cover.innerHTML =
+      '<h1>' + esc(rootName) + '</h1>' +
+      '<div class="cover-sub">Component outline · ' + sections.length + ' items · ' + DATA.connections.length + ' connections</div>' +
+      (genAt ? '<div class="cover-gen">' + esc(genAt) + '</div>' : '');
+    root.appendChild(cover);
+
+    // For the tree density we skip city-block grouping and put every entry
+    // (including L0) in a single flat multicol body so the indent structure
+    // is uninterrupted.
+    let treeBody = null;
+    if (isTree) {
+      treeBody = document.createElement('div');
+      treeBody.className = 'outline-body';
+      root.appendChild(treeBody);
+    }
+
+    // Group by top-level (city) so each L0 gets a wide header and its own
+    // multicol body for descendants. Avoids the column-span: all mid-flow
+    // quirks that leave pages half-empty on some print engines.
+    let currentCity = null;
+    let currentBody = null;
+    for (const s of sections) {
+      const c = s.c;
+      const el = document.createElement('article');
+      el.className = 'outline-entry level-' + Math.max(0, Math.min(4, c.level));
+      if (isTree) el.style.paddingLeft = (s.depth * 5) + 'mm';
+
+      // Start a new city block whenever we hit an L0 (regular/compact/spacious).
+      if (!isTree) {
+        if (c.level === 0) {
+          currentCity = document.createElement('section');
+          currentCity.className = 'city-block';
+          root.appendChild(currentCity);
+          currentBody = null;
+        } else if (!currentBody) {
+          currentBody = document.createElement('div');
+          currentBody.className = 'outline-body';
+          (currentCity || root).appendChild(currentBody);
+        }
+      }
+
+      const tags = (c.metadata && Array.isArray(c.metadata.tags)) ? c.metadata.tags : [];
+      const url = c.metadata && c.metadata.url;
+      const lang = c.metadata && c.metadata.language;
+      const stars = c.metadata && c.metadata.stars;
+      const license = c.metadata && c.metadata.license;
+      const outs = outEdges.get(c.id) || [];
+      const ins = inEdges.get(c.id) || [];
+
+      const facts = [];
+      if (lang) facts.push('<strong>Language:</strong> ' + esc(lang));
+      if (stars != null) facts.push('★ ' + stars);
+      if (license) facts.push(esc(license));
+      if (tags.length) facts.push('<strong>Tags:</strong> ' + tags.map(esc).join(', '));
+
+      let html = '';
+      html += '<header>' +
+        '<span class="dot" style="background:' + esc(c.color || '#334155') + '"></span>' +
+        '<span class="entry-title">' + esc(c.name) + '</span>' +
+        '<span class="entry-type">' + esc(c.type || 'L' + c.level) + '</span>' +
+      '</header>';
+      if (showPath && c.level > 0) {
+        const p = pathOf(c.id);
+        if (p && p !== c.name) html += '<div class="entry-path">' + esc(p) + '</div>';
+      }
+      if (showDesc && c.description) html += '<div class="entry-desc">' + esc(c.description) + '</div>';
+      if (showNotes && c.notes) html += '<div class="entry-notes">' + esc(c.notes) + '</div>';
+      if (showFacts && facts.length) html += '<div class="entry-facts">' + facts.join(' · ') + '</div>';
+      if (showRepo && url) html += '<div class="entry-facts"><strong>Repo:</strong> <a href="' + esc(url) + '">' + esc(String(url).replace(/^https?:\/\/(www\.)?/, '')) + '</a></div>';
+      if (showConns && outs.length) {
+        html += '<div class="entry-conns"><strong>Uses</strong>' + outs.map(e => {
+          const t = byId.get(e.targetId);
+          const label = e.kind && e.kind !== 'uses' ? ' <em>(' + esc(e.kind) + ')</em>' : '';
+          const lab2 = e.label ? ' — ' + esc(e.label) : '';
+          return ' → ' + esc(t ? t.name : e.targetId) + label + lab2;
+        }).join(';') + '</div>';
+      }
+      if (showConns && ins.length) {
+        html += '<div class="entry-conns"><strong>Used by</strong>' + ins.map(e => {
+          const src = byId.get(e.sourceId);
+          const label = e.kind && e.kind !== 'uses' ? ' <em>(' + esc(e.kind) + ')</em>' : '';
+          const lab2 = e.label ? ' — ' + esc(e.label) : '';
+          return ' ← ' + esc(src ? src.name : e.sourceId) + label + lab2;
+        }).join(';') + '</div>';
+      }
+
+      el.innerHTML = html;
+      if (isTree) {
+        treeBody.appendChild(el);
+      } else if (c.level === 0) {
+        // L0 lives on the city block directly; deeper levels flow in the body.
+        currentCity.appendChild(el);
+      } else {
+        currentBody.appendChild(el);
+      }
+    }
+    bodyEl.appendChild(root);
+    return true;
+  }
+
+  btnPrint.onclick = () => {
+    // Start every print with a clean slate. If the user cancelled a previous
+    // print and hit Print again, the old #print-sheet / #print-outline would
+    // otherwise linger and print the wrong content.
+    teardownTiles();
+    teardownOutline();
+    const v = printPagesEl ? printPagesEl.value : 'fit';
+    // Outline — a text-first view. Build and switch the tab into outline mode
+    // (visible on screen); the browser print dialog opens too so one click
+    // both previews and prints. The outline stays visible after the dialog
+    // closes so the user can review, change density, and re-print.
+    const outlineDensity =
+      v === 'outline-compact' ? 'compact' :
+      v === 'outline-spacious' ? 'spacious' :
+      v === 'outline-tree' ? 'tree' :
+      v === 'outline' ? 'regular' : null;
+    if (outlineDensity) {
+      if (!buildOutline(outlineDensity)) { window.print(); return; }
+      bodyEl.classList.add('outlining');
+      window.scrollTo(0, 0);
+      setTimeout(() => window.print(), 120);
+      return;
+    }
+    // One L1/L2 per page — each target and its subtree, fit to letter landscape.
+    if (v === 'l1-per-page' || v === 'l2-per-page') {
+      const level = v === 'l1-per-page' ? 1 : 2;
+      if (!buildPerLevel(level)) { window.print(); return; }
+      bodyEl.classList.add('tiling');
+      if (state.mode === 'blueprint') bodyEl.classList.add('tiling-blueprint');
+      setTimeout(() => window.print(), 60);
+      return;
+    }
+    const n = parseInt(v, 10);
+    if (!v || v === 'fit' || !Number.isFinite(n) || n < 1) {
+      window.print();
+      return;
+    }
+    if (!buildTiles(n)) {
+      window.print();
+      return;
+    }
+    bodyEl.classList.add('tiling');
+    if (state.mode === 'blueprint') bodyEl.classList.add('tiling-blueprint');
+    setTimeout(() => window.print(), 60);
+  };
   function refreshEdgeButton() {
     btnEdges.textContent = state.showEdges ? 'Edges: on' : 'Edges: off';
     btnEdges.setAttribute('aria-pressed', String(state.showEdges));
@@ -925,6 +1889,25 @@ body[data-mode="wireframe"] #hint {
     catch (_e) { return null; }
   })();
   applyMode(urlMode === 'blueprint' || urlMode === 'wireframe' || urlMode === 'city' ? urlMode : initialMode);
+
+  // Honour ?tile=N — preselect the tile-print pages dropdown. Accepts numeric
+  // values (1/2/3/...) plus the named values "fit", "outline",
+  // "outline-compact", and "outline-spacious".
+  const urlTile = urlParams.get('tile');
+  if (urlTile && printPagesEl) {
+    const named = new Set(['fit', 'outline', 'outline-tree', 'outline-compact', 'outline-spacious', 'l1-per-page', 'l2-per-page']);
+    const wanted = named.has(urlTile) ? urlTile : String(parseInt(urlTile, 10) || '');
+    if ([...printPagesEl.options].some((o) => o.value === wanted)) {
+      printPagesEl.value = wanted;
+    }
+  }
+
+  // Honour ?print=1 — the React app opens tile/outline print in a new tab and
+  // uses this to auto-trigger the Print button, so the user gets one click end
+  // to end instead of "new tab opens, then click Print again".
+  if (urlParams.get('print') === '1') {
+    setTimeout(() => btnPrint.click(), 250);
+  }
 
   // Initial render
   fitToVisible();

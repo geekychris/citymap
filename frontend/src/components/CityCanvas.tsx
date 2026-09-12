@@ -191,22 +191,79 @@ function CanvasInner({
     createConn.mutate({ sourceId: c.source, targetId: c.target, kind: 'uses' })
   }
 
-  const focusParent = focusRootId ? components.find((c) => c.id === focusRootId)?.parentId ?? null : null
+  const focused = focusRootId ? components.find((c) => c.id === focusRootId) ?? null : null
+  const focusParent = focused ? focused.parentId ?? null : null
+
+  // Siblings = other children of the same parent (or, for top-level cities,
+  // other roots). Ordered top-to-bottom, then left-to-right — matches how the
+  // eye scans them on the map.
+  const siblings = focused
+    ? components
+        .filter((c) => (c.parentId ?? null) === (focused.parentId ?? null))
+        .sort((a, b) => {
+          const dy = (a.y || 0) - (b.y || 0)
+          if (Math.abs(dy) > 20) return dy
+          return (a.x || 0) - (b.x || 0)
+        })
+    : []
+  const idx = focused ? siblings.findIndex((s) => s.id === focused.id) : -1
+  const prevSib = idx > 0 ? siblings[idx - 1] : null
+  const nextSib = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null
+
+  // Left/Right arrow pages through siblings when focused. Ignore when the user
+  // is typing in an input so name-edit still works.
+  useEffect(() => {
+    if (!focused) return
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      const tag = t?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (t as any)?.isContentEditable) return
+      if (e.key === 'ArrowLeft' && prevSib) {
+        e.preventDefault()
+        focusOn(prevSib.id)
+      } else if (e.key === 'ArrowRight' && nextSib) {
+        e.preventDefault()
+        focusOn(nextSib.id)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [focused, prevSib, nextSib, focusOn])
 
   return (
     <div className="w-full h-full relative">
-      {focusRootId && (
-        <div className="absolute z-10 top-3 left-3 flex items-center gap-2">
-          <button
-            className="btn"
-            onClick={() => focusOn(focusParent)}
-          >
+      {focused && (
+        <div className="absolute z-10 top-3 left-3 flex items-center gap-2 flex-wrap">
+          <button className="btn" onClick={() => focusOn(focusParent)}>
             {focusParent ? '↑ Up one level' : '↑ Show all cities'}
           </button>
+          {siblings.length > 1 && (
+            <>
+              <button
+                className="btn"
+                disabled={!prevSib}
+                onClick={() => prevSib && focusOn(prevSib.id)}
+                title={prevSib ? `Previous sibling: ${prevSib.name} (← arrow)` : 'No previous sibling'}
+                style={{ opacity: prevSib ? 1 : 0.4 }}
+              >
+                ← Prev
+              </button>
+              <span className="text-xs text-subink font-mono">
+                {idx + 1} / {siblings.length}
+              </span>
+              <button
+                className="btn"
+                disabled={!nextSib}
+                onClick={() => nextSib && focusOn(nextSib.id)}
+                title={nextSib ? `Next sibling: ${nextSib.name} (→ arrow)` : 'No next sibling'}
+                style={{ opacity: nextSib ? 1 : 0.4 }}
+              >
+                Next →
+              </button>
+            </>
+          )}
           <span className="text-sm text-subink">
-            Viewing: <span className="text-ink font-medium">
-              {components.find((c) => c.id === focusRootId)?.name}
-            </span>
+            Viewing: <span className="text-ink font-medium">{focused.name}</span>
           </span>
         </div>
       )}

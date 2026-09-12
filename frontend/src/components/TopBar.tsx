@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { Building2, Download, FileCode, GitBranch, Plus, Printer, RefreshCw } from 'lucide-react'
@@ -10,6 +11,7 @@ export function TopBar() {
   const setViewMode = useUI((s) => s.setViewMode)
   const showEdges = useUI((s) => s.showEdges)
   const setShowEdges = useUI((s) => s.setShowEdges)
+  const [tilePages, setTilePages] = useState<string>('fit')
 
   const createCity = useMutation({
     mutationFn: () =>
@@ -43,6 +45,23 @@ export function TopBar() {
     window.location.href = `/api/export/html?download=true&mode=${viewMode}`
   }
 
+  // Tiled printing lives in the self-contained HTML export — its runtime knows
+  // how to slice the world into letter-sized sheets. For "Fit" (single sheet)
+  // we just print in-app since @media print already handles chrome hiding.
+  const doPrint = () => {
+    if (tilePages === 'fit') {
+      window.print()
+      return
+    }
+    const params = new URLSearchParams({
+      mode: viewMode,
+      tile: tilePages,
+      edges: showEdges ? 'on' : 'off',
+      print: '1',
+    })
+    window.open(`/api/export/html?${params.toString()}`, '_blank', 'noopener')
+  }
+
   return (
     <header className="h-12 flex items-center gap-3 px-4 border-b border-line bg-panel/80 backdrop-blur no-print">
       <div className="flex items-center gap-2 font-semibold">
@@ -60,7 +79,37 @@ export function TopBar() {
       >
         <GitBranch size={14} /> {showEdges ? 'Edges: on' : 'Edges: off'}
       </button>
-      <button className="btn" onClick={() => window.print()} title="Print — hides chrome and prints the canvas in the current mode">
+      <select
+        value={tilePages}
+        onChange={(e) => setTilePages(e.target.value)}
+        className="bg-panel border border-line text-ink rounded-lg px-2 py-1 text-xs"
+        title="Split the map across N letter-sized sheets you can tape together. Fit prints a single sheet."
+      >
+        <option value="fit">Pages: fit</option>
+        <option value="outline-tree">Pages: outline — tree (sidebar)</option>
+        <option value="outline-compact">Pages: outline — compact</option>
+        <option value="outline">Pages: outline — regular</option>
+        <option value="outline-spacious">Pages: outline — spacious</option>
+        <option value="l1-per-page">Pages: one L1 per page</option>
+        <option value="l2-per-page">Pages: one L2 per page</option>
+        <option value="1">Pages: 1 wide</option>
+        <option value="2">Pages: 2 wide</option>
+        <option value="3">Pages: 3 wide</option>
+        <option value="4">Pages: 4 wide</option>
+        <option value="6">Pages: 6 wide</option>
+        <option value="8">Pages: 8 wide</option>
+      </select>
+      <button
+        className="btn"
+        onClick={doPrint}
+        title={
+          tilePages === 'fit'
+            ? 'Print — hides chrome and prints the canvas as a single sheet'
+            : tilePages === 'outline'
+            ? 'Outline print — opens the HTML export in a new tab as a hierarchical text document, then use Cmd/Ctrl+P there'
+            : `Tile print — opens the HTML export in a new tab with ${tilePages} sheets wide, then use Cmd/Ctrl+P there`
+        }
+      >
         <Printer size={14} /> Print
       </button>
       <button className="btn" onClick={() => qc.invalidateQueries({ queryKey: ['components'] })}>
