@@ -44,7 +44,7 @@ function CanvasInner({
 }) {
   const qc = useQueryClient()
   const rf = useReactFlow()
-  const { selectedId, select, focusRootId, focusOn } = useUI()
+  const { selectedId, select, focusRootId, focusOn, viewMode, showEdges } = useUI()
 
   // Which subtree are we viewing? null = all roots.
   const visibleComponents = useMemo(() => {
@@ -115,8 +115,8 @@ function CanvasInner({
     setNodes(rfNodes)
   }, [rfNodes, setNodes])
   useEffect(() => {
-    setEdges(rfEdges)
-  }, [rfEdges, setEdges])
+    setEdges(showEdges ? rfEdges : [])
+  }, [rfEdges, setEdges, showEdges])
 
   // Re-fit the viewport whenever the focused subtree changes so semantic zoom picks
   // the right level. Since rfNodes is already filtered to the visible subtree,
@@ -226,7 +226,18 @@ function CanvasInner({
         deleteKeyCode={null}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#22304d" />
+        <Background
+          variant={viewMode === 'blueprint' ? BackgroundVariant.Lines : BackgroundVariant.Dots}
+          gap={viewMode === 'blueprint' ? 40 : 16}
+          size={1}
+          color={
+            viewMode === 'blueprint'
+              ? 'rgba(255,255,255,0.18)'
+              : viewMode === 'wireframe'
+              ? '#b8bec9'
+              : '#22304d'
+          }
+        />
         <Controls onFitView={() => rf.fitView({ duration: 400 })} />
         <MiniMap
           nodeColor={(n) => (n.data as any)?.component?.color || '#334155'}

@@ -33,6 +33,8 @@ const patched = html
   // Header counts + timestamp
   .replace(/ · 0 components · 0 connections · [^<]*</,
            ' · __CITYMAP_COMPONENT_COUNT__ components · __CITYMAP_CONNECTION_COUNT__ connections · __CITYMAP_GENERATED_AT__<')
+  // Initial view mode — backend swaps this in at request time
+  .replace(/<body data-mode="[^"]*">/, '<body data-mode="__CITYMAP_MODE__">')
 
 fs.writeFileSync(outPath, patched, 'utf8')
 console.error(`✓ wrote ${outPath} (${Math.round(patched.length / 1024)} KB)`)

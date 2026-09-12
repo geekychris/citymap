@@ -33,6 +33,7 @@ function ComponentNodeInner({ data, selected, id }: { data: Data; selected: bool
   const inputRef = useRef<HTMLInputElement>(null)
   const rf = useReactFlow()
   const focusOn = useUI((s) => s.focusOn)
+  const viewMode = useUI((s) => s.viewMode)
 
   // Current viewport zoom — reactive; drives progressive disclosure.
   const zoom = useStore((s) => s.transform[2])
@@ -110,13 +111,27 @@ function ComponentNodeInner({ data, selected, id }: { data: Data; selected: bool
   const repoUrl = c.metadata?.url as string | undefined
   const tags = Array.isArray(c.metadata?.tags) ? (c.metadata!.tags as string[]) : []
 
+  // Blueprint/wireframe modes drop the coloured gradient in favour of a flat
+  // background so borders + text carry the meaning — this is what makes the
+  // canvas printable and readable on paper.
+  const bodyBg =
+    viewMode === 'blueprint'
+      ? hasChildren
+        ? 'rgba(255,255,255,0.02)'
+        : 'rgba(255,255,255,0.06)'
+      : viewMode === 'wireframe'
+      ? hasChildren
+        ? 'rgba(0,0,0,0)'
+        : '#ffffff'
+      : `linear-gradient(180deg, ${hexA(bg, containerFade * 0.5)}, ${hexA(bg, containerFade)})`
+
   return (
     <div
       className={`rf-node ${selected ? 'selected' : ''}`}
       style={{
         width: '100%',
         height: '100%',
-        background: `linear-gradient(180deg, ${hexA(bg, containerFade * 0.5)}, ${hexA(bg, containerFade)})`,
+        background: bodyBg,
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -145,7 +160,12 @@ function ComponentNodeInner({ data, selected, id }: { data: Data; selected: bool
             padding: `${style.padY}px ${style.padX}px`,
             fontSize: style.fontSize,
             lineHeight: 1.15,
-            background: hexA(bg, 0.65),
+            background:
+              viewMode === 'blueprint'
+                ? 'rgba(255,255,255,0.08)'
+                : viewMode === 'wireframe'
+                ? '#f4f4f4'
+                : hexA(bg, 0.65),
             display: 'flex',
             alignItems: 'center',
             gap: Math.max(6, style.padX * 0.5),

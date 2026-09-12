@@ -10,7 +10,7 @@
  * type, description, notes, tags, metadata + any repo link.
  */
 
-export function renderHtmlExport({ components, connections, cityName }) {
+export function renderHtmlExport({ components, connections, cityName, mode }) {
   const payload = { components, connections }
   const dataJson = JSON.stringify(payload)
     .replace(/</g, '\\u003c')
@@ -23,8 +23,9 @@ export function renderHtmlExport({ components, connections, cityName }) {
   const componentCount = components.length
   const connectionCount = connections.length
   const generatedAt = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
+  const initialMode = mode === 'blueprint' || mode === 'wireframe' ? mode : 'city'
 
-  return template({ dataJson, cityTitle, componentCount, connectionCount, generatedAt })
+  return template({ dataJson, cityTitle, componentCount, connectionCount, generatedAt, initialMode })
 }
 
 function escapeHtml(s) {
@@ -33,7 +34,7 @@ function escapeHtml(s) {
   })[c])
 }
 
-function template({ dataJson, cityTitle, componentCount, connectionCount, generatedAt }) {
+function template({ dataJson, cityTitle, componentCount, connectionCount, generatedAt, initialMode }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,7 +43,7 @@ function template({ dataJson, cityTitle, componentCount, connectionCount, genera
   <title>${cityTitle} — CityMap export</title>
   <style>${CSS}</style>
 </head>
-<body>
+<body data-mode="${initialMode}">
   <header id="topbar">
     <div class="brand">
       <span class="brand-mark"></span>
@@ -50,7 +51,14 @@ function template({ dataJson, cityTitle, componentCount, connectionCount, genera
       <span class="brand-sub">CityMap export · ${componentCount} components · ${connectionCount} connections · ${generatedAt}</span>
     </div>
     <div class="controls">
+      <div id="modes" class="mode-toggle" role="group" aria-label="View mode">
+        <button data-mode-btn="city" title="Full-color city map">City</button>
+        <button data-mode-btn="blueprint" title="Blueprint — architectural drawing on blue paper">Blueprint</button>
+        <button data-mode-btn="wireframe" title="Wireframe — black on white, print-friendly">Wire</button>
+      </div>
       <input id="search" type="search" placeholder="Search components…" autocomplete="off" />
+      <button id="toggle-edges" class="btn" title="Toggle connectors between components" aria-pressed="true">Edges: on</button>
+      <button id="print" class="btn" title="Print — hides chrome and prints in the current mode">Print</button>
       <button id="reset" class="btn" title="Fit to whole city">Fit</button>
       <button id="up" class="btn" title="Zoom out one level (Esc)">↑ Up</button>
     </div>
@@ -141,6 +149,7 @@ body {
   font-family: inherit;
 }
 .btn:hover { background: rgba(148, 163, 184, 0.22); }
+.btn.off { opacity: 0.55; }
 
 #stage { flex: 1; display: flex; overflow: hidden; }
 #viewport {
@@ -315,6 +324,216 @@ body {
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
+/* Mode toggle */
+.mode-toggle {
+  display: inline-flex; align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+.mode-toggle button {
+  background: transparent;
+  color: var(--subink);
+  border: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.mode-toggle button:hover { color: var(--ink); background: rgba(255,255,255,.05); }
+.mode-toggle button.active { color: var(--accent); background: rgba(56,189,248,.15); }
+
+/* ---------- Blueprint mode ------------------------------------------------ */
+body[data-mode="blueprint"] {
+  background: #0d3b7a;
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] #topbar {
+  background: rgba(9, 34, 71, 0.85);
+  border-bottom-color: rgba(255,255,255,.35);
+}
+body[data-mode="blueprint"] .brand-name,
+body[data-mode="blueprint"] .brand-sub { color: #eaf2ff; }
+body[data-mode="blueprint"] .brand-mark {
+  background: #cffafe; box-shadow: none;
+}
+body[data-mode="blueprint"] .btn,
+body[data-mode="blueprint"] .controls input#search {
+  background: rgba(255,255,255,.08);
+  color: #eaf2ff;
+  border-color: rgba(255,255,255,.4);
+}
+body[data-mode="blueprint"] .btn:hover { background: rgba(255,255,255,.16); }
+body[data-mode="blueprint"] .mode-toggle { border-color: rgba(255,255,255,.35); }
+body[data-mode="blueprint"] .mode-toggle button { color: rgba(234,242,255,.7); }
+body[data-mode="blueprint"] .mode-toggle button.active { color: #67e8f9; background: rgba(103,232,249,.15); }
+body[data-mode="blueprint"] #viewport {
+  background:
+    linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 40px 40px,
+    #0d3b7a;
+}
+body[data-mode="blueprint"] .node {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.6);
+  border-radius: 4px;
+  box-shadow: none;
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] .node.selected {
+  outline-color: #67e8f9;
+}
+body[data-mode="blueprint"] .node .head {
+  background: rgba(255,255,255,.08);
+  border-bottom-color: rgba(255,255,255,.45);
+  color: #ffffff;
+}
+body[data-mode="blueprint"] .node .body,
+body[data-mode="blueprint"] .node .body *,
+body[data-mode="blueprint"] .node .desc {
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] .node .repo-link { color: #67e8f9; }
+body[data-mode="blueprint"] .badge {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.55);
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] .chip {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.45);
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] #panel {
+  background: rgba(9, 34, 71, 0.85);
+  border-left-color: rgba(255,255,255,.35);
+}
+body[data-mode="blueprint"] #panel-content pre,
+body[data-mode="blueprint"] #panel-content .notes {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.35);
+  color: #eaf2ff;
+}
+body[data-mode="blueprint"] #crumb,
+body[data-mode="blueprint"] #hint {
+  background: rgba(9,34,71,.85);
+  border-color: rgba(255,255,255,.35);
+  color: #cffafe;
+}
+
+/* ---------- Wireframe mode ------------------------------------------------ */
+body[data-mode="wireframe"] {
+  background: #ffffff;
+  color: #111827;
+}
+body[data-mode="wireframe"] #topbar {
+  background: #ffffff;
+  border-bottom-color: #111827;
+  color: #111827;
+}
+body[data-mode="wireframe"] .brand-name,
+body[data-mode="wireframe"] .brand-sub { color: #111827; }
+body[data-mode="wireframe"] .brand-mark {
+  background: #111827; box-shadow: none;
+}
+body[data-mode="wireframe"] .btn,
+body[data-mode="wireframe"] .controls input#search {
+  background: #ffffff;
+  color: #111827;
+  border-color: #111827;
+}
+body[data-mode="wireframe"] .btn:hover { background: #f4f4f4; }
+body[data-mode="wireframe"] .mode-toggle { border-color: #111827; }
+body[data-mode="wireframe"] .mode-toggle button { color: #4b5563; }
+body[data-mode="wireframe"] .mode-toggle button.active { color: #111827; background: #f4f4f4; }
+body[data-mode="wireframe"] #viewport {
+  background: #ffffff;
+  background-image:
+    radial-gradient(#d1d5db 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+body[data-mode="wireframe"] .node {
+  background: #ffffff !important;
+  border: 1.25px solid #111827;
+  border-radius: 3px;
+  box-shadow: none;
+  color: #111827;
+}
+body[data-mode="wireframe"] .node.selected {
+  outline-color: #111827;
+  box-shadow: none;
+}
+body[data-mode="wireframe"] .node .head {
+  background: #f4f4f4;
+  border-bottom-color: #111827;
+  color: #111827;
+}
+body[data-mode="wireframe"] .node .body,
+body[data-mode="wireframe"] .node .body *,
+body[data-mode="wireframe"] .node .desc {
+  color: #111827;
+}
+body[data-mode="wireframe"] .node .repo-link {
+  color: #111827;
+  text-decoration: underline;
+}
+body[data-mode="wireframe"] .badge {
+  background: transparent;
+  border: 1px solid #111827;
+  color: #111827;
+}
+body[data-mode="wireframe"] .chip {
+  background: transparent;
+  border: 1px solid #4b5563;
+  color: #111827;
+}
+body[data-mode="wireframe"] #panel {
+  background: #ffffff;
+  border-left-color: #111827;
+  color: #111827;
+}
+body[data-mode="wireframe"] #panel-content pre,
+body[data-mode="wireframe"] #panel-content .notes {
+  background: #f4f4f4;
+  border-color: #d1d5db;
+  color: #111827;
+}
+body[data-mode="wireframe"] #crumb,
+body[data-mode="wireframe"] #hint {
+  background: #ffffff;
+  border-color: #111827;
+  color: #111827;
+}
+
+/* ---------- Print --------------------------------------------------------- */
+@media print {
+  @page { size: landscape; margin: 12mm; }
+  html, body { height: auto !important; overflow: visible !important; }
+  #topbar, #panel, #hint { display: none !important; }
+  #stage, #viewport { overflow: visible !important; height: auto !important; }
+  body[data-mode="blueprint"] #viewport,
+  body[data-mode="wireframe"] #viewport {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body[data-mode="city"] {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  body[data-mode="city"] .node {
+    background: #ffffff !important;
+    border: 1px solid #111827 !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+  body[data-mode="city"] .node .head {
+    background: #f4f4f4 !important;
+    color: #111827 !important;
+    border-bottom-color: #111827 !important;
+  }
+}
 `
 
 // The runtime — vanilla JS, no dependencies.
@@ -331,6 +550,10 @@ const JS = String.raw`
   const crumb = $('crumb');
   const btnReset = $('reset');
   const btnUp = $('up');
+  const btnPrint = $('print');
+  const btnEdges = $('toggle-edges');
+  const modesEl = $('modes');
+  const bodyEl = document.body;
 
   const byId = new Map(DATA.components.map(c => [c.id, c]));
   const childrenOf = new Map();
@@ -347,6 +570,17 @@ const JS = String.raw`
   }
   for (const r of (childrenOf.get(null) || [])) computeAbs(r, 0, 0);
 
+  const initialMode = (() => {
+    const m = bodyEl.getAttribute('data-mode');
+    if (m === 'blueprint' || m === 'wireframe' || m === 'city') return m;
+    return 'city';
+  })();
+
+  const urlParams = (() => {
+    try { return new URL(window.location.href).searchParams; }
+    catch (_e) { return new URLSearchParams(); }
+  })();
+
   const state = {
     scale: 0.5,
     tx: 100,
@@ -354,7 +588,18 @@ const JS = String.raw`
     focusRootId: null,
     selectedId: null,
     query: '',
+    mode: initialMode,
+    showEdges: urlParams.get('edges') !== 'off',
   };
+
+  function applyMode(m) {
+    state.mode = m;
+    bodyEl.setAttribute('data-mode', m);
+    modesEl.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-mode-btn') === m);
+    });
+    render();
+  }
 
   function applyTransform() {
     world.style.transform = 'translate(' + state.tx + 'px, ' + state.ty + 'px) scale(' + state.scale + ')';
@@ -461,7 +706,13 @@ const JS = String.raw`
       el.style.top  = p.y + 'px';
       el.style.width  = c.width + 'px';
       el.style.height = c.height + 'px';
-      el.style.background = 'linear-gradient(180deg, ' + hexA(c.color, 0.25) + ', ' + hexA(c.color, 0.55) + ')';
+      // In blueprint/wireframe the node fill is set by the mode's CSS (flat, no
+      // colour). Only city mode paints the container in its role colour.
+      if (state.mode === 'city') {
+        el.style.background = 'linear-gradient(180deg, ' + hexA(c.color, 0.25) + ', ' + hexA(c.color, 0.55) + ')';
+      } else {
+        el.style.background = '';
+      }
       // Deeper levels paint on top so smaller inner nodes are hit-testable and
       // visually cover their parents. (In the live React Flow app, nodes are
       // actually nested in the DOM so this comes for free.)
@@ -509,7 +760,9 @@ const JS = String.raw`
       nodesEl.appendChild(el);
     }
 
-    // Edges — only within the visible set
+    // Edges — only within the visible set, and only when the user hasn't
+    // toggled them off in the header.
+    if (!state.showEdges) return updateCrumb();
     for (const conn of DATA.connections) {
       if (!visible.has(conn.sourceId) || !visible.has(conn.targetId)) continue;
       const s = byId.get(conn.sourceId), t = byId.get(conn.targetId);
@@ -526,11 +779,15 @@ const JS = String.raw`
       const midx2 = x2 - dx * 0.4;
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + midx1 + ' ' + y1 + ', ' + midx2 + ' ' + y2 + ', ' + x2 + ' ' + y2);
+      const edgeColor =
+        state.mode === 'blueprint' ? '#cffafe' :
+        state.mode === 'wireframe' ? '#111827' :
+        (conn.kind === 'depends_on' ? '#a78bfa' : '#64748b');
       path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', conn.kind === 'depends_on' ? '#a78bfa' : '#64748b');
-      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('stroke', edgeColor);
+      path.setAttribute('stroke-width', state.mode === 'wireframe' ? '1.25' : '1.5');
       if (conn.kind === 'depends_on') path.setAttribute('stroke-dasharray', '4 4');
-      path.setAttribute('opacity', '0.65');
+      path.setAttribute('opacity', state.mode === 'city' ? '0.65' : '0.9');
       edgesEl.appendChild(path);
 
       if (conn.label) {
@@ -538,7 +795,9 @@ const JS = String.raw`
         text.setAttribute('x', ((x1 + x2) / 2).toString());
         text.setAttribute('y', ((y1 + y2) / 2 - 4).toString());
         text.setAttribute('font-size', '10');
-        text.setAttribute('fill', '#94a3b8');
+        text.setAttribute('fill',
+          state.mode === 'blueprint' ? '#cffafe' :
+          state.mode === 'wireframe' ? '#111827' : '#94a3b8');
         text.setAttribute('text-anchor', 'middle');
         text.textContent = conn.label;
         edgesEl.appendChild(text);
@@ -693,6 +952,26 @@ const JS = String.raw`
     const parent = byId.get(state.focusRootId).parentId;
     focusOn(parent || null);
   };
+  btnPrint.onclick = () => window.print();
+  function refreshEdgeButton() {
+    btnEdges.textContent = state.showEdges ? 'Edges: on' : 'Edges: off';
+    btnEdges.setAttribute('aria-pressed', String(state.showEdges));
+    btnEdges.classList.toggle('off', !state.showEdges);
+  }
+  btnEdges.onclick = () => { state.showEdges = !state.showEdges; refreshEdgeButton(); render(); };
+  refreshEdgeButton();
+  modesEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-mode-btn]');
+    if (!btn) return;
+    applyMode(btn.getAttribute('data-mode-btn'));
+  });
+
+  // Honour ?mode= override on the URL, else fall back to the body's data-mode.
+  const urlMode = (() => {
+    try { return new URL(window.location.href).searchParams.get('mode'); }
+    catch (_e) { return null; }
+  })();
+  applyMode(urlMode === 'blueprint' || urlMode === 'wireframe' || urlMode === 'city' ? urlMode : initialMode);
 
   // Initial render
   fitToVisible();

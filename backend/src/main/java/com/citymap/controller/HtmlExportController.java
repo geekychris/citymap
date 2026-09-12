@@ -36,13 +36,15 @@ public class HtmlExportController {
     @GetMapping(value = "/html", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> exportHtml(
             @RequestParam(value = "download", defaultValue = "false") boolean download,
-            @RequestParam(value = "title", required = false) String titleOverride
+            @RequestParam(value = "title", required = false) String titleOverride,
+            @RequestParam(value = "mode", required = false) String modeParam
     ) throws Exception {
         List<Component> comps = components.findAll();
         Component root = comps.stream().filter(c -> c.parentId == null).findFirst().orElse(null);
         String title = titleOverride != null && !titleOverride.isBlank()
                 ? titleOverride
                 : (root != null ? root.name : "CityMap");
+        String mode = "blueprint".equals(modeParam) || "wireframe".equals(modeParam) ? modeParam : "city";
 
         Map<String, Object> payload = Map.of(
                 "components", comps,
@@ -58,6 +60,7 @@ public class HtmlExportController {
                 .replace("__CITYMAP_COMPONENT_COUNT__", String.valueOf(comps.size()))
                 .replace("__CITYMAP_CONNECTION_COUNT__", String.valueOf(connections.findAll().size()))
                 .replace("__CITYMAP_GENERATED_AT__", generatedAt)
+                .replace("__CITYMAP_MODE__", mode)
                 .replace("__CITYMAP_DATA__", json);
 
         HttpHeaders headers = new HttpHeaders();

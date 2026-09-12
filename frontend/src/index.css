@@ -143,3 +143,162 @@ body {
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover { background-color: rgba(148,163,184,.45); }
+
+/* ---------- Blueprint mode ------------------------------------------------- */
+/* Deep architects' blue paper. Colour is drained from nodes; forms carry the
+   meaning via thin white borders + white/cyan type. */
+[data-mode="blueprint"] body,
+[data-mode="blueprint"] {
+  background: #0d3b7a;
+  color: #eaf2ff;
+}
+[data-mode="blueprint"] .react-flow {
+  background:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 200px 200px,
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 200px 200px,
+    #0d3b7a;
+}
+[data-mode="blueprint"] .rf-node {
+  border: 1px solid rgba(255,255,255,.6);
+  border-radius: 4px;
+  box-shadow: none;
+  color: #eaf2ff;
+}
+[data-mode="blueprint"] .rf-node.selected {
+  outline-color: #67e8f9;
+  box-shadow: 0 0 0 1px #67e8f9 inset;
+}
+[data-mode="blueprint"] .rf-node .rf-head {
+  border-bottom: 1px solid rgba(255,255,255,.45);
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+[data-mode="blueprint"] .rf-node .rf-badge {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.55);
+  color: #eaf2ff;
+}
+[data-mode="blueprint"] .chip {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.45);
+  color: #eaf2ff;
+}
+[data-mode="blueprint"] .rf-node .rf-body,
+[data-mode="blueprint"] .rf-node .rf-body * {
+  color: #eaf2ff;
+}
+[data-mode="blueprint"] .rf-node .rf-body a {
+  color: #67e8f9;
+}
+[data-mode="blueprint"] .rf-node input.rf-title-input {
+  color: #ffffff;
+  border-bottom-color: rgba(255,255,255,.5);
+}
+[data-mode="blueprint"] .react-flow__edge-path { stroke: #cffafe; stroke-width: 1.2; }
+[data-mode="blueprint"] .react-flow__edge .react-flow__edge-text { fill: #cffafe; }
+[data-mode="blueprint"] .react-flow__edge .react-flow__edge-textbg { fill: rgba(13, 59, 122, .8); }
+[data-mode="blueprint"] .react-flow__handle { background: #67e8f9; border-color: #0d3b7a; }
+[data-mode="blueprint"] .react-flow__background { color: rgba(255,255,255,.18); }
+[data-mode="blueprint"] .react-flow__controls,
+[data-mode="blueprint"] .react-flow__minimap {
+  background: rgba(9, 34, 71, .85);
+  border-color: rgba(255,255,255,.35);
+}
+
+/* ---------- Wireframe mode ------------------------------------------------- */
+/* Pure black-on-white — reads well on paper, photocopies cleanly. */
+[data-mode="wireframe"] body,
+[data-mode="wireframe"] {
+  background: #ffffff;
+  color: #111827;
+}
+[data-mode="wireframe"] .react-flow { background: #ffffff; }
+[data-mode="wireframe"] .rf-node {
+  border: 1.25px solid #111827;
+  border-radius: 3px;
+  box-shadow: none;
+  background: #ffffff;
+  color: #111827;
+}
+[data-mode="wireframe"] .rf-node.selected {
+  outline: 2px solid #111827;
+  outline-offset: -1px;
+  box-shadow: none;
+}
+[data-mode="wireframe"] .rf-node .rf-head {
+  border-bottom: 1px solid #111827;
+  color: #111827;
+  background: #f4f4f4 !important;
+}
+/* Description, tags, meta and repo link inside the body — Tailwind slate/sky
+   classes are baked in via inline classes so we need to win the specificity war. */
+[data-mode="wireframe"] .rf-node .rf-body,
+[data-mode="wireframe"] .rf-node .rf-body * {
+  color: #111827;
+}
+[data-mode="wireframe"] .rf-node .rf-body a {
+  color: #111827;
+  text-decoration: underline;
+}
+[data-mode="wireframe"] .rf-node input.rf-title-input {
+  color: #111827;
+  border-bottom-color: rgba(17,24,39,.4);
+}
+[data-mode="wireframe"] .rf-node .rf-badge {
+  background: transparent;
+  border: 1px solid #111827;
+  color: #111827;
+}
+[data-mode="wireframe"] .chip {
+  background: transparent;
+  border: 1px solid #4b5563;
+  color: #111827;
+}
+[data-mode="wireframe"] .react-flow__edge-path { stroke: #111827; stroke-width: 1.25; }
+[data-mode="wireframe"] .react-flow__edge .react-flow__edge-text { fill: #111827; }
+[data-mode="wireframe"] .react-flow__edge .react-flow__edge-textbg { fill: #ffffff; }
+[data-mode="wireframe"] .react-flow__handle { background: #111827; border-color: #ffffff; }
+[data-mode="wireframe"] .react-flow__controls,
+[data-mode="wireframe"] .react-flow__minimap {
+  background: #ffffff;
+  border-color: #111827;
+  color: #111827;
+}
+[data-mode="wireframe"] .react-flow__controls-button {
+  color: #111827;
+  border-bottom-color: #d1d5db;
+}
+[data-mode="wireframe"] .react-flow__controls-button svg { fill: #111827; }
+
+/* ---------- Print --------------------------------------------------------- */
+/* When the user hits Cmd/Ctrl-P, drop all the app chrome and print just the
+   canvas. City mode is intentionally not print-friendly (dark background eats
+   toner) — the user should switch to Blueprint or Wireframe first. */
+@media print {
+  @page { size: landscape; margin: 12mm; }
+  html, body, #root {
+    background: #ffffff !important;
+    color: #111827 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body { background-image: none !important; }
+  header, aside, .no-print,
+  .react-flow__controls, .react-flow__minimap, .react-flow__panel {
+    display: none !important;
+  }
+  [data-mode="blueprint"] body,
+  [data-mode="blueprint"] {
+    background: #0d3b7a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  [data-mode="blueprint"] .react-flow {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .react-flow, .react-flow__renderer, .react-flow__viewport { overflow: visible !important; }
+  /* Give the canvas the entire page. */
+  main, .flex-1 { width: 100% !important; height: auto !important; }
+}
+

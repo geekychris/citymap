@@ -2,12 +2,13 @@
 /**
  * Export the current CityMap as a single self-contained HTML file.
  *
- *   node scripts/export-html.mjs [--api URL] [--out FILE] [--title NAME]
+ *   node scripts/export-html.mjs [--api URL] [--out FILE] [--title NAME] [--mode MODE]
  *
  * Defaults:
  *   --api   http://localhost:8088
  *   --out   ./citymap-<timestamp>.html
  *   --title first CITY's name if there's exactly one, else "CityMap"
+ *   --mode  city (also accepts: blueprint, wireframe)
  *
  * With no --out, writes to stdout instead of a file.
  */
@@ -40,6 +41,7 @@ async function main() {
     components: payload.components || [],
     connections: payload.connections || [],
     cityName,
+    mode: argv.mode,
   })
 
   if (outPath) {

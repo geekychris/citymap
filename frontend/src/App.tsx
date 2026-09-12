@@ -12,6 +12,7 @@ export default function App() {
   const connections = useQuery({ queryKey: ['connections'], queryFn: api.listConnections })
   const selectedId = useUI((s) => s.selectedId)
   const focusOn = useUI((s) => s.focusOn)
+  const viewMode = useUI((s) => s.viewMode)
 
   // Allow ?focus=<id> in the URL to jump into a subtree on load (nice for demos + links).
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function App() {
   if (components.error) return <FullscreenMessage msg={`Backend unreachable: ${(components.error as Error).message}`} error />
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden">
+    <div className="h-screen w-screen flex flex-col overflow-hidden" data-mode={viewMode}>
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar components={components.data ?? []} />
