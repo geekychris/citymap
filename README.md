@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Citymap logo" width="180">
+</p>
+
 # CityMap
 
 A TOGAF-inspired **city map** editor for enterprise architecture: components nested as
